@@ -1,0 +1,132 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /geoai/V1/label-platform
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://192.168.3.13:32189/geodl_iecas?useSSL=false&useUnicode=true&characterEncoding=utf8
+    username: iecas
+    password: 123456
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  aop:
+    proxy-target-class: true
+
+  cache:
+    type: redis
+  redis:
+    host: 192.168.2.156
+    port: 32190
+    database: 2
+    jedis:
+      pool:
+        max-active: 200
+        max-wait: -1
+        max-idle: 10
+        min-idle: 10
+    timeout: 2000
+
+  jpa:
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        temp:
+          use_jdbc_metadata_defaults: false
+        hbm2ddl:
+          auto: update
+
+# mybatis plus 设置
+mybatis-plus:
+  type-aliases-package: cn.iecas.geoai.labelplatform.entity.domain
+  global-config:
+    # 关闭 mybatis-plus的 banner
+    banner: false
+  type-handlers-package: cn.iecas.geoai.labelplatform.common.typehandler
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    jdbc-type-for-null: null
+    # 配置控制台打印日志Debug
+    logging:
+      level:
+        cn.iecas.geoai.labelplatform: debug
+    debug: true
+    # 配置sql控制台输出
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+value:
+  service:
+    port: 18086
+    name: 标注管理
+    url: http://192.168.3.13:18086/geoai/v1/service/register
+    status: http://192.168.3.13:18086/geoai/v1/status
+    prefix: /label-platform
+    enable: false
+  dir:
+    labDir: /var/nfs/general/data
+    inoutDir: /var/nfs/general/mnt/mfs/data
+    #rootDir: /home/data
+    #absolutePath: d:\\tmp
+    rootDir: C:\Users\dell\Desktop
+    absolutePath: d:\\tmp
+  api:
+    file-info: http://192.168.3.13:18082/geoai/v1/file
+    get-file-by-contentid: http://192.168.3.13:18082/geoai/v1/file/text/getFileByContentId
+    user-info: http://192.168.2.156:31151/api/v1/users/token_check
+    user-info-export: http://192.168.2.156:31151/api/v1/users/export
+    sampleset-creation: http://localhost:28000/geoapi/V1/sampleset-platform/sampleset/creation
+    file-info-idList: http://192.168.3.13:18082/geoai/v1/file
+    user-query-name: http://192.168.2.156:31151/api/v1/users/simplified_info/get?user_ids={user_ids}
+    list-file-id-url: http://192.168.3.13:18082/geoai/v1/file/listId
+    query-username-byuserid: http://192.168.2.156:31151/api/v1/users/simplified_info/get
+    dispatch: http://192.168.3.13:18086/geoai/v1/service/dispatch
+    push-label-project: http://192.168.3.13:18082/..
+  ai-label:
+    service-info: http://192.168.9.64:32299/api/v1/service
+    service-detail: http://192.168.9.64:32299/api/v1/service/info
+    call-service: http://192.168.9.64:32299/api/v1/task
+    task-status: http://192.168.9.64:32299/api/v1/task/status
+    task-result: http://192.168.9.64:32299/api/v1/task/result
+    preprocessing: http://192.168.9.62:32146/preprocessing
+  database:
+    enable: false
+    dbName: geodl_iecas
+    tables:
+      - label_category
+      - label_dataset
+      - label_dataset_file
+      - label_image_label
+      - label_image_object_info
+      - label_plan
+      - label_plan_selected_record
+      - label_project
+      - label_project_base_info
+      - label_task
+      - label_task_statis_info
+    views:
+      - label_dataset_image_info
+auth:
+  enabled: true
+  user-info-url: http://192.168.2.156:31151/api/v1/users/token_check
+  ignore-url-list:
+    - /geoai/V1/label-platform/swagger-ui.html
+    - /geoai/V1/label-platform/webjars/**
+    - /geoai/V1/label-platform/swagger-resources/**
+    - /geoai/V1/label-platform/v2/**
+    - /geoai/V1/label-platform/status/**
+swagger:
+  enabled: true
+  base-package: cn.iecas.geoai.labelplatform.controller
+  title: 标注平台接口文档
+
+catalog:
+  enable: false
+  host: 192.168.7.20:11096
+
+configtask:
+  # cron: 0 */10 * * * ?
+  cron: 0/3 * * * * ?

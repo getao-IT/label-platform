@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iecas.geoai.labelplatform.dao.DatabaseMapper">
+    <select id="selectTableNames" resultType="String">
+        select tablename from pg_tables WHERE schemaname='public' AND tablename like 'label%'
+    </select>
+
+    <select id="selectViewNames" resultType="String">
+        select pg_views.viewname from pg_views WHERE schemaname='public' AND viewname like 'label%'
+    </select>
+
+    <select id="createDatasetImageInfo">
+        create view label_dataset_image_info as
+            (   SELECT label_dataset_image.id,
+                       label_dataset_image.dataset_id,
+                       label_dataset_image.image_id,
+                       label_dataset_image.status,
+                       label_dataset_image.label,
+                       label_dataset_image.ai_label,
+                       label_dataset_image.feedback,
+                       label_dataset_image.label_user_id,
+                       label_dataset_image.check_user_id,
+                       label_dataset_image.screenshot,
+                       label_dataset_image.assign_label_time,
+                       label_dataset_image.assign_check_time,
+                       label_dataset_image.finish_label_time,
+                       label_dataset_image.finish_check_time,
+                       image.image_name,
+                       image.path,
+                       image.source,
+                       image.user_id,
+                       image.thumb,
+                       image.width,
+                       image.height,
+                       image.projection,
+                       image.min_lon,
+                       image.min_lat,
+                       image.max_lon,
+                       image.max_lat,
+                       image.batch_number,
+                       image.user_name,
+                       image.is_public,
+                       image.bands,
+                       image."bit",
+                       image.create_time,
+                       image.keywords,
+                       image.size,
+                       image.resolution,
+                       image.min_projection_x,
+                       image.min_projection_y,
+                       image.max_projection_x,
+                       image.max_projection_y,
+                       image.coordinate_system_type
+            FROM (image
+                JOIN label_dataset_image ON ((image.id = label_dataset_image.image_id))))
+    </select>
+
+</mapper>

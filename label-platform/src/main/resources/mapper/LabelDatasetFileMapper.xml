@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iecas.geoai.labelplatform.dao.LabelDatasetFileMapper">
+
+
+    <delete id="removeAllByDatasetIds">
+        delete from label_dataset_file ldi where ldi.dataset_id in
+        <foreach collection="datasetIdList" item="datasetId" index="index" open="(" close=")" separator=",">
+            #{datasetId}
+        </foreach>
+    </delete>
+
+    <select id="getFileByStatusRandomly" resultType="integer">
+        select file_id from label_dataset_file ldi where ldi.status = #{status} and ldi.dataset_id=#{datasetId} ORDER BY random() limit #{count}
+    </select>
+
+    <update id="setCheckUserId">
+        update label_dataset_file ldi set check_user_id=#{checkUserId} where dataset_id=#{datasetId} and ldi.file_id in
+        <foreach collection="fileIdList" item="fileId" index="index" open="(" close=")" separator=",">
+            #{fileId}
+        </foreach>
+
+    </update>
+
+    <update id="setLabelUserId">
+        update label_dataset_file ldi set label_user_id=#{labelUserId} where dataset_id=#{datasetId} and ldi.file_id in
+        <foreach collection="fileIdList" item="fileId" index="index" open="(" close=")" separator=",">
+            #{fileId}
+        </foreach>
+    </update>
+
+    <select id="getRepeatDatasetFile" parameterType="java.util.List" resultType="java.lang.Integer">
+        SELECT
+            file_id
+        FROM
+            label_dataset_file
+        WHERE
+            dataset_id IN
+            <foreach collection="datasetIdList" item="datasetId" open="(" close=")" separator=",">
+                #{datasetId}
+            </foreach>
+        GROUP BY
+            file_id
+        HAVING
+            COUNT(file_id) > 1
+    </select>
+
+    <!-- 返回标注文件各个状态的个数 -->
+    <select id="getLabelTaskStatusRate" parameterType="java.lang.Integer" resultType="java.util.HashMap">
+        SELECT
+            status,
+            COUNT (id)
+        FROM
+            label_dataset_file AS ldf,
+            ( SELECT dataset_id FROM label_project WHERE id = #{projectId} ) AS lp
+        WHERE
+            ldf.dataset_id = lp.dataset_id
+        GROUP BY
+            status
+    </select>
+
+    <!-- 根据数据集ID获取第一次申领任务时间 -->
+    <select id="getFristAssignCheckTimeByDatasetid" resultType="java.sql.Timestamp">
+        SELECT MIN(assign_check_time) FROM
+            label_dataset_file
+        WHERE
+            dataset_id = #{labelDataSetId} AND
+            check_user_id = #{checkUserId}
+    </select>
+
+    <!-- 根据数据集ID获取第一次申领标注任务时间 -->
+    <select id="getFristAssignLabelTimeByDatasetid" resultType="java.sql.Timestamp">
+        SELECT MIN(assign_label_time) FROM
+            label_dataset_file
+        WHERE
+            dataset_id = #{labelDataSetId} AND
+            label_user_id = #{labelUserId}
+    </select>
+
+    <!-- 根据数据集ID获取最后完成标注任务时间 -->
+    <select id="getLastFinishLabelTimeByDatasetid" resultType="java.sql.Timestamp">
+        SELECT MAX(finish_label_time) FROM
+            label_dataset_file
+        WHERE
+            dataset_id = #{labelDataSetId} AND
+            label_user_id = #{labelUserId}
+    </select>
+
+    <!-- 根据数据集ID获取最后完成标注审核时间 -->
+    <select id="getLastFinishCheckTimeByDatasetid" resultType="java.sql.Timestamp">
+        SELECT MAX(finish_check_time) FROM
+            label_dataset_file
+        WHERE
+            dataset_id = #{labelDataSetId} AND
+            check_user_id = #{checkUserId}
+    </select>
+
+</mapper>

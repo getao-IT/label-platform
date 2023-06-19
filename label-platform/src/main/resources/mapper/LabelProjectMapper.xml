@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.iecas.geoai.labelplatform.dao.LabelProjectMapper">
+    <update id="updateProjectProgress">
+        update label_project set finish_count = finish_count + 1 where id=#{projectId}
+    </update>
+    <update id="updateKeyWords">
+        update label_project set keywords = #{keywords} where id = #{labelProjectId}
+    </update>
+
+
+    <select id="getLabelProject" resultType="cn.iecas.geoai.labelplatform.entity.domain.LabelProject">
+        SELECT
+               ld.dataset_name AS datasetName,
+               lp.*
+        FROM
+             label_project AS lp
+                 LEFT JOIN
+                 label_dataset AS ld
+                 ON lp.dataset_id = ld.id
+        <where>
+            lp.user_id = #{labelProjectSearchRequest.userId}
+            <if test="labelProjectSearchRequest.projectName!=null and labelProjectSearchRequest.projectName!=''">
+                and lower(concat(lp.project_name)) like lower('%${labelProjectSearchRequest.projectName}%')
+            </if>
+            <if test="labelProjectSearchRequest.labelProjectStatus!=null">
+                and lp.status = #{labelProjectSearchRequest.labelProjectStatus}
+            </if>
+            <if test="labelProjectSearchRequest.category!=null and labelProjectSearchRequest.category!=''">
+                and lp.category = #{labelProjectSearchRequest.category}
+            </if>
+            <if test="labelProjectSearchRequest.keywords!=null and labelProjectSearchRequest.keywords!=''">
+                and lp.keywords like concat('%', #{labelProjectSearchRequest.keywords}, '%')
+            </if>
+            <if test="labelProjectSearchRequest.projectDescription!=null and labelProjectSearchRequest.projectDescription!=''">
+                and lp.project_description like concat('%', #{labelProjectSearchRequest.projectDescription}, '%')
+            </if>
+            <if test="labelProjectSearchRequest.startTime!=null and labelProjectSearchRequest.endTime != null">
+                and lp.create_time BETWEEN #{labelProjectSearchRequest.startTime} AND #{labelProjectSearchRequest.endTime}
+            </if>
+        </where>
+        <if test="labelProjectSearchRequest.orderByCol=='' and labelProjectSearchRequest.orderByWay==''">
+            order by lp.create_time desc
+        </if>
+        <if test="labelProjectSearchRequest.orderByCol!=null and labelProjectSearchRequest.orderByWay != null and labelProjectSearchRequest.orderByCol!='' and labelProjectSearchRequest.orderByWay!=''">
+            order by ${labelProjectSearchRequest.orderByCol} ${labelProjectSearchRequest.orderByWay}
+        </if>
+    </select>
+
+    <select id="getMergeProjectRelateDatasetId" parameterType="java.util.List" resultType="java.lang.String">
+        SELECT DISTINCT
+            related_dataset_id
+        FROM
+            label_project
+        WHERE
+            id IN
+                   <foreach collection="labelProjectIds" item="project" open="(" close=")" separator=",">
+                        #{project}
+                   </foreach>
+    </select>
+
+    <!--按时间统计时空-->
+    <select id="getProjectRelateFileByPid" parameterType="cn.iecas.geoai.labelplatform.entity.dto.LabelProjectRelateFileSTCRequest" resultType="cn.iecas.geoai.labelplatform.entity.dto.LabelProjectRelateFileSTCRequest">
+        SELECT
+               COUNT(*) AS spaceTime
+        FROM
+             file_image_info AS fii,
+             label_dataset_file AS ldf
+        WHERE fii.id = ldf.file_id
+          AND ldf.dataset_id =
+              (
+                  SELECT
+                         dataset_id
+                  FROM
+                       label_project
+                  WHERE
+                        id = #{params.projectId}
+              )
+          <choose>
+              <when test="params.startTime!=null and params.endTime!=null">
+                  AND create_time BETWEEN #{params.startTime} AND #{params.endTime}
+              </when>
+              <when test="params.startTime!=null">
+                  AND create_time &gt; #{params.startTime}
+              </when>
+              <when test="params.endTime!=null">
+                  AND create_time &lt; #{params.endTime}
+              </when>
+          </choose>
+    </select>
+
+    <!-- 根据项目id获取标注项目文件：目前只返回经纬度信息 -->
+    <select id="getProjectFilesByPid" parameterType="java.lang.Integer" resultType="cn.iecas.geoai.labelplatform.entity.dto.LabelProjectRelateFileSTCRequest">
+        SELECT
+            max_lon AS maxLon,
+            min_lon AS minLon,
+            max_lat AS maxLat,
+            min_lat AS minLat
+        FROM
+            file_image_info AS fii,
+            label_dataset_file AS ldf
+        WHERE
+            fii.id = ldf.file_id
+          AND ldf.dataset_id =
+              (
+                  SELECT
+                      dataset_id
+                  FROM
+                      label_project
+                  WHERE
+                      id = #{projectId}
+              )
+    </select>
+
+    <!-- 根据项目id获取标注项目文件极值 -->
+    <select id="getProjectFileSelectConditon" parameterType="cn.iecas.geoai.labelplatform.entity.dto.LabelProjectRelateFileSTCRequest" resultType="cn.iecas.geoai.labelplatform.entity.dto.LabelProjectRelateFileSTCRequest">
+        SELECT
+            MIN(create_time) AS startTime,
+            MAX(create_time) AS endTime,
+            MAX(max_lon) AS maxLon,
+            MIN(min_lon) AS minLon,
+            MAX(max_lat) AS maxLat,
+            MIN(min_lat) AS minLat
+        FROM
+            file_image_info AS fii,
+            label_dataset_file AS ldf
+        WHERE
+              fii.id = ldf.file_id
+            AND ldf.dataset_id =
+            (
+                SELECT
+                    dataset_id
+                FROM
+                    label_project
+                WHERE
+                    id = #{params.projectId}
+            )
+    </select>
+
+    <!--按经度统计时空-->
+    <select id="getProjectRelateFileByLon" parameterType="cn.iecas.geoai.labelplatform.entity.dto.LabelProjectRelateFileSTCRequest" resultType="cn.iecas.geoai.labelplatform.entity.dto.LabelProjectRelateFileSTCRequest">
+        SELECT
+            COUNT(*) AS spaceTime
+        FROM
+            file_image_info AS fii,
+            label_dataset_file AS ldf
+        WHERE
+              fii.id = ldf.file_id
+              AND ldf.dataset_id =
+              (
+                SELECT
+                    dataset_id
+                FROM
+                    label_project
+                WHERE
+                    id = #{params.projectId}
+              )
+        <choose>
+            <when test="params.minLon!=null and params.maxLon!=null">
+                AND (min_lon BETWEEN #{params.minLon} AND #{params.maxLon}
+                OR max_lon BETWEEN #{params.minLon} AND #{params.maxLon}
+                OR (min_lon &lt; #{params.minLon} AND max_lon &gt; #{params.maxLon}))
+            </when>
+        </choose>
+    </select>
+</mapper>
