@@ -44,5 +44,4 @@ public interface LabelTaskService extends IService<LabelTask> {
     List<HashMap<String, String>> getLabelTaskStatusRate(int projectId);
     List<LabelTaskStatisInfo> createLabelTaskStatis(LabelProject labelProject, List<String> userIdList, LabelTaskType taskType);
     List<VideoFrame> getFrameImgByFrameNbr(String videoPath, int frameNumber, int returnNumber);
-    Boolean isPreprocess(int taskId);
 }

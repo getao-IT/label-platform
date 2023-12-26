@@ -56,6 +56,12 @@ public class ApiTest {
 
 
     @Test
+    public void upload() {
+
+    }
+
+
+    @Test
     public void applyDatasetFile() {
         int[] userIds = new int[]{0,1,15};
         List<LabelDatasetFile> labelDatasetFiles = labelDatasetFileService.list(new QueryWrapper<LabelDatasetFile>().eq("dataset_id", 13));

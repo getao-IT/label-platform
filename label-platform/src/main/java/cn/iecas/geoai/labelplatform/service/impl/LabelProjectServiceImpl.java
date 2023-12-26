@@ -7,6 +7,7 @@ import cn.aircas.utils.image.geo.GeoUtils;
 import cn.iecas.geoai.labelplatform.dao.LabelDatasetFileMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelDatasetImageInfoMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelProjectMapper;
+import cn.iecas.geoai.labelplatform.dao.LabelTaskStatisInfoMapper;
 import cn.iecas.geoai.labelplatform.entity.common.DatasetType;
 import cn.iecas.geoai.labelplatform.entity.common.PageResult;
 import cn.iecas.geoai.labelplatform.entity.domain.*;
@@ -26,9 +27,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.additional.update.impl.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.twelvemonkeys.util.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.gdal;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -62,7 +67,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-//@Transactional
+@Transactional
 @EnableAsync
 public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,LabelProject> implements LabelProjectService {
 
@@ -150,8 +155,6 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
         this.labelProjectMapper.insert(labelProject);
         int labelDatasetId = this.labelDatasetService.createDatasetFromProject(labelProject,labelProject.isUseLabel());
 
-        QueryWrapper<LabelDatasetFile> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("dataset_id", labelDatasetId);
         labelProject.setDatasetId(labelDatasetId);
         this.updateById(labelProject);
         labelTaskService.createLabelTasks(labelProject);
@@ -159,9 +162,6 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
         if (labelProject.getIsAiLabel()){
             String token = request.getHeader("token");
             aiLabelService.callAIService(labelProject,token);
-        }
-        if (labelProject.isPreprocessing()) {
-            aiLabelService.setImagePretreatPath(labelProject, request.getHeader("token"));
         }
         if (labelProject.isUnite()) {
             if (labelProject.getCategory().contains("503-"))
@@ -197,7 +197,7 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
             labelDatasetFileList.get(i).setStatus(LabelStatus.LABELING);
             labelDatasetFileList.get(i).setAssignLabelTime(new Timestamp(new Date().getTime()));
             labelDatasetFileList.get(i).setAssignCheckTime(new Timestamp(new Date().getTime()));
-            JSONObject fileInfoById = fileService.getFileInfoById(labelDatasetFileList.get(i).getFileId(),null);
+            JSONObject fileInfoById = fileService.getFileInfoById(labelDatasetFileList.get(i).getFileId());
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("fileId", fileInfoById.get("id"));
             jsonObject.put("filePath", fileInfoById.get("path"));
@@ -241,7 +241,7 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
         List<JSONObject> fileInfoList = null;
         if (labelProject.getCategory().contains("change")) {
             List<Integer> fileIdList = labelDatasetFileList.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
-            fileInfoList = this.fileService.listFileInfoByIdList(fileIdList, DatasetType.IMAGE,null);
+            fileInfoList = this.fileService.listFileInfoByIdList(fileIdList, DatasetType.IMAGE);
             this.coordinateConvertor(fileInfoList);
             deteSampleVos = this.mapDeteSamples(fileInfoList);
             labelAssignNums = labelAssignNums / 2;
@@ -258,7 +258,7 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
             labelDatasetFileList.get(i).setStatus(LabelStatus.LABELING);
             labelDatasetFileList.get(i).setAssignLabelTime(new Timestamp(new Date().getTime()));
             labelDatasetFileList.get(i).setAssignCheckTime(new Timestamp(new Date().getTime()));
-            JSONObject fileInfoById = fileService.getFileInfoById(labelDatasetFileList.get(i).getFileId(),null);
+            JSONObject fileInfoById = fileService.getFileInfoById(labelDatasetFileList.get(i).getFileId());
             JSONObject filejsonObject = new JSONObject();
             JSONObject compareFileJsonObject = new JSONObject();
 
@@ -1390,7 +1390,7 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
         if (labelDatasetFile.getRelatedFileId() == 0) {
             return null;
         }
-        JSONObject imageInfo = this.fileService.getFileInfoById(labelDatasetFile.getRelatedFileId(),null);
+        JSONObject imageInfo = this.fileService.getFileInfoById(labelDatasetFile.getRelatedFileId());
         return imageInfo;
     }
 

@@ -53,16 +53,16 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public JSONObject getFileInfoById(int fileId,String token) {
+    public JSONObject getFileInfoById(int fileId) {
         List<Integer> fileIdList = Collections.singletonList(fileId);
-        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,DatasetType.IMAGE,token);
+        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,DatasetType.IMAGE);
         return fileList.get(0);
     }
 
     @Override
-    public JSONObject getFileInfoById(int fileId, DatasetType datasetType,String token) {
+    public JSONObject getFileInfoById(int fileId, DatasetType datasetType) {
         List<Integer> fileIdList = Collections.singletonList(fileId);
-        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,datasetType,token);
+        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,datasetType);
         return fileList.get(0);
     }
 
@@ -168,19 +168,15 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public List<JSONObject> listFileInfoByIdList(List<Integer> fileIdList, DatasetType datasetType, String token) throws ResourceAccessException {
+    public List<JSONObject> listFileInfoByIdList(List<Integer> fileIdList, DatasetType datasetType) throws ResourceAccessException {
         if (fileIdList.size()==0)
             return new ArrayList<>();
 
         JSONObject result = null;
         String fileIds = fileIdList.toString().replace("[","").replace("]","").replace(" ","");
 
-
         HttpHeaders httpHeaders = new HttpHeaders();
-        if (token==null)
-            httpHeaders.add("token",request.getHeader("token"));
-        else
-            httpHeaders.add("token",token);
+        httpHeaders.add("token",request.getHeader("token"));
         HttpEntity<String> httpEntity = new HttpEntity<>(null,httpHeaders);
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("content","false");

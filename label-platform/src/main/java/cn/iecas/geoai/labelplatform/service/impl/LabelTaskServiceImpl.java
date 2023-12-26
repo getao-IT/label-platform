@@ -1,13 +1,8 @@
 package cn.iecas.geoai.labelplatform.service.impl;
 
-import cn.aircas.utils.comporess.CompressUtil;
 import cn.aircas.utils.date.DateUtils;
 import cn.aircas.utils.file.FileUtils;
 import cn.aircas.utils.image.ImageFormat;
-import cn.aircas.utils.image.ImageInfo;
-import cn.aircas.utils.image.ParseImageInfo;
-import cn.aircas.utils.image.emun.CoordinateSystemType;
-import cn.aircas.utils.image.geo.GeoUtils;
 import cn.iecas.geoai.labelplatform.dao.LabelProjectMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelTaskMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelTaskStatisInfoMapper;
@@ -18,12 +13,10 @@ import cn.iecas.geoai.labelplatform.entity.dto.*;
 import cn.iecas.geoai.labelplatform.entity.emun.LabelPointType;
 import cn.iecas.geoai.labelplatform.entity.emun.LabelStatus;
 import cn.iecas.geoai.labelplatform.entity.emun.LabelTaskType;
-import cn.iecas.geoai.labelplatform.entity.fileFormat.XMLLabelObjectInfo;
 import cn.iecas.geoai.labelplatform.service.*;
 import cn.iecas.geoai.labelplatform.service.labelFileService.LabelFileService;
 import cn.iecas.geoai.labelplatform.util.FFmpegFrameGrabberUtils;
 import cn.iecas.geoai.labelplatform.util.JedisUtils;
-import cn.iecas.geoai.labelplatform.util.XMLUtils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -228,7 +221,7 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
      * @param labelCommitInfo 影像标注、审核信息
      */
     @Override
-    public synchronized void commitLabelInfo(LabelCommitInfo labelCommitInfo) {
+    public void commitLabelInfo(LabelCommitInfo labelCommitInfo) {
         LabelStatus status = labelCommitInfo.getStatus();
         int labelFileId = labelCommitInfo.getLabelFileId();
         LabelTask labelTask = this.getById(labelCommitInfo.getLabelTaskId());
@@ -237,9 +230,9 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
         Assert.notNull(labelDatasetFile,"数据集中的影像数据不存在，或者被删除");
         BeanUtils.copyProperties(labelCommitInfo, labelDatasetFile);
 
-        //如果提交为待审核状态，但是审核用户id不为0，则说明该影像已经被审核员申领，则将状态修改为审核中，而不是待审核。
+        //如果提交为待审核状态，但是审核用户id大于-1，则说明该影像已经被审核员申领，则将状态修改为审核中，而不是待审核。
         if (labelCommitInfo.getStatus() == LabelStatus.UNCHECK
-                && labelDatasetFile.getCheckUserId() !=0) {
+                && labelDatasetFile.getCheckUserId() > -1) {
             labelDatasetFile.setStatus(LabelStatus.CHECKING);
             // 审核员任务状态为审核中，则完成数减1
             QueryWrapper<LabelTask> wrapper = new QueryWrapper<>();
@@ -450,7 +443,6 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
         labelTaskFileSearchRequest.setUserId(labelTask.getUserId());
         labelTaskFileSearchRequest.setLabelDatasetId(labelTask.getLabelDatasetId());
         LabelProject labelProject = this.labelProjectService.getById(labelTask.getLabelProjectId());
-        labelTaskFileSearchRequest.setCooperate(labelProject.isCooperate());
         List<LabelDatasetFile> labelDatasetFileList = this.labelDatasetFileService.searchLabelTaskFile(labelTaskFileSearchRequest);
         List<Integer> fileIdList = labelDatasetFileList.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
 //
@@ -585,7 +577,6 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
      */
     private List<LabelTask> createProjectTasks(LabelProject labelProject, List<String> userIdList, LabelTaskType taskType){
         List<LabelTask> labelTaskList = new ArrayList<>();
-
         for (String userId : userIdList) {
             int defaultApplyCount = taskType == LabelTaskType.LABEL ? labelProject.getDefaultLabelCount() : labelProject.getDefaultCheckCount();
             LabelTask labelTask = LabelTask.builder()
@@ -593,10 +584,6 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
                     .labelProjectId(labelProject.getId()).publisherId(labelProject.getUserId())
                     .taskType(taskType).userId(Integer.parseInt(userId)).keywords(labelProject.getKeywords())
                     .labelDatasetId(labelProject.getDatasetId()).defaultApplyCount(defaultApplyCount).build();
-            if (labelProject.isCooperate() && taskType == LabelTaskType.LABEL && labelProject.getImageIds() != null && labelProject.getImageIds().size() != 0) {
-                labelTask.setProcessingList(labelProject.getImageIds().toString().replace("[","").replace("]",""));
-                labelTask.setTotalCount(labelProject.getImageIds().size());
-            }
             labelTaskList.add(labelTask);
         }
         return labelTaskList;
@@ -621,8 +608,6 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
             List<Map<String, Object>> data = (List<Map<String, Object>>) userNameByUserId.get("data");
             LabelTaskStatisInfo taskStatisInfo = LabelTaskStatisInfo.builder().labelProjectId(labelProject.getId()).userId(Integer.parseInt(userId))
                     .userRole(userRole).userName(String.valueOf(data.get(0).get("name"))).build();
-            if (labelProject.isCooperate() && taskType == LabelTaskType.LABEL)
-                taskStatisInfo.setApplyFileCount(taskStatisInfo.getApplyFileCount()+labelProject.getImageIds().size());
             taskStatisList.add(taskStatisInfo);
         }
         return taskStatisList;
@@ -753,133 +738,9 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
             return null;
         }
         LabelFileService labelFileService = datasetType.getLabelFileService();
-        String labelObject = null;
-
-        if (file.getOriginalFilename().endsWith("xz")) {
-            ImageInfo imageInfo = ParseImageInfo.parseInfo(FileUtils.getStringPath(this.rootDir, filePath));
-            if (imageInfo.getCoordinateSystemType() == CoordinateSystemType.PIXELCS) {
-                log.error("不支持对pix坐标影像进行导入 {}", filePath);
-                return null;
-            }
-
-            String tempFilePath = FileUtils.getStringPath(this.rootDir, filePath) + System.currentTimeMillis() + ".xz";
-            String destPath = FileUtils.getStringPath(this.rootDir, filePath) + ".geojson";
-            File tempFile = new File(tempFilePath);
-            OutputStream outputStream = new FileOutputStream(tempFile);
-            outputStream.write(file.getBytes());
-            if (outputStream != null) {
-                outputStream.close();
-            }
-            JSONObject labelInfo = this.parseLabelFromXzFile(destPath, tempFile, imageInfo);
-            String tempXmlPath = FileUtils.getStringPath(this.rootDir, filePath) + ".xml";
-            XMLUtils.toXMLFile(tempXmlPath, JSONObject.toJavaObject(labelInfo, XMLLabelObjectInfo.class));
-            labelObject = labelFileService.importLabelFromXzFile(filePath, labelPointType, new File(tempXmlPath));
-        } else {
-            labelObject = labelFileService.importLabelXML(filePath,labelPointType,file);
-        }
-
-        return labelObject;
+        return labelFileService.importLabelXML(filePath,labelPointType,file);
     }
 
-    /**
-     * 解析*.XZ文件为样本库可以识别的JSON格式
-     * @param destPath 解析.xz文件生成的.geojson文件路径
-     * @param file .xz源文件
-     * @param imageInfo 标注的影像信息
-     * @return
-     * @throws IOException
-     */
-    private JSONObject parseLabelFromXzFile(String destPath, File file, ImageInfo imageInfo) throws IOException {
-        JSONObject labelInfo = new JSONObject();
-        JSONArray labels = new JSONArray();
-        File destFile = new File(destPath);
-        if (!destFile.exists()) {
-            destFile.createNewFile();
-        }
-
-        CompressUtil.deCompressXZFile(file,destFile, false);
-        StringBuilder stringBuilder = new StringBuilder();
-        FileReader fileReader = new FileReader(destFile);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        String line = null;
-        while ((line = bufferedReader.readLine()) != null) {
-            stringBuilder.append(line);
-        }
-        JSONObject fileContent = JSONObject.parseObject(stringBuilder.toString());
-        JSONArray features = fileContent.getJSONArray("features");
-        for (Object feature : features) {
-            JSONObject label = new JSONObject();
-            JSONObject featureJson = JSONObject.parseObject(feature.toString());
-            JSONObject geometry = featureJson.getJSONObject("geometry");
-
-            if (!geometry.getString("type").equalsIgnoreCase("MultiPolygon"))
-                continue;
-
-            List<List> coordinates = geometry.getJSONArray("coordinates").toJavaList(List.class);
-            JSONObject point = new JSONObject();
-            JSONArray pt = new JSONArray();
-            for (List coordinate : coordinates) {
-                for (Object o : coordinate) {
-                    for (List p : (List<List>) o) {
-                        if (Double.parseDouble(String.valueOf(p.get(0))) > imageInfo.getMaxLon()
-                                || Double.parseDouble(String.valueOf(p.get(1))) > imageInfo.getMaxLat()
-                                || Double.parseDouble(String.valueOf(p.get(0))) < imageInfo.getMinLon()
-                                || Double.parseDouble(String.valueOf(p.get(1))) < imageInfo.getMinLat())
-                            continue;
-                        pt.add(p.toString().replace("[","").replace("]","").replace(" ", ""));
-                    }
-                    point.put("point", pt);
-                    label.put("points", point);
-                    label.put("id", null);
-                    label.put("type", "Polygon");
-                    label.put("checkStatus", null);
-                    label.put("note", null);
-                    label.put("coordinate", "geodegree");
-                    label.put("description", "经纬度坐标系");
-                    JSONArray possibleresult = new JSONArray();
-                    JSONObject psiblt = new JSONObject();
-                    psiblt.put("probability", 1);
-                    psiblt.put("name", "未知");
-                    Map<String, Object> properties = featureJson.getJSONObject("properties").getInnerMap();
-                    List<String> names = Arrays.stream(new String[]{"landuse","building","highway","amenity","barrier"}).collect(Collectors.toList());
-                    List<String> keyList = properties.keySet().stream().filter(k -> names.contains(k)).collect(Collectors.toList());
-                    if (keyList.size() == 1)
-                        psiblt.put("name", keyList.get(0));
-                    possibleresult.add(psiblt);
-                    label.put("possibleresult", possibleresult);
-                    labels.add(label);
-                }
-            }
-        }
-        file.delete();
-        labelInfo.put("object", labels);
-        return labelInfo;
-    }
-    public static void main(String[] args) throws Exception {
-        /*String srcDir = "C:\\Users\\dell\\Desktop\\getao\\work_file\\cjl\\20230427\\planet_112.578_37.677_1cfc348b.osm.geojson.xz";
-        String destDir = "C:\\Users\\dell\\Desktop\\getao\\work_file\\cjl\\20230427\\1.geojson";
-        CompressUtil.deCompressXZFile(new File(srcDir), new File(destDir), false);*/
-
-        //new LabelTaskServiceImpl().importLabelFile(null,null,null,null);
-
-        List<List> list = new ArrayList<>();
-        List<List> list1 = new ArrayList<>();
-        List<String> list2 = new ArrayList<>();
-        List<String> list3 = new ArrayList<>();
-        list2.add("aaa");
-        list2.add("bbb");
-        list2.add("ccc");
-        list2.add("ddd");
-        list1.add(list2);
-        list3.addAll(list2);
-        list1.add(list3);
-        list.add(list1);
-        System.out.println(list);
-        System.out.println(list.toString());
-        System.out.println(list.toString().replace("[[", "--"));
-        System.out.println(Arrays.asList(list.toString().replace("[[", "").replace("]]", "")).get(0));
-        System.out.println(Arrays.asList(list.toString().replace("[[", "").replace("]]", "")).get(1));
-    }
 
 
     /**
@@ -889,7 +750,7 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
     public void exportLabelFile(LabelExportParam labelExportParam) throws UnsupportedEncodingException, DocumentException {
         labelExportParam.setFileInfo(null);
 
-        JSONObject fileInfo = this.fileService.getFileInfoById(labelExportParam.getFileId(),null);
+        JSONObject fileInfo = this.fileService.getFileInfoById(labelExportParam.getFileId());
         labelExportParam.setFileInfo(fileInfo);
 
         DatasetType fileType = labelExportParam.getFileType();
@@ -1222,18 +1083,5 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
             throw new RuntimeException("IO异常");
         }
         return result;
-    }
-
-    /**
-     * 判断某标注任务是否处于预处理过程中
-     * @param taskId
-     * @return
-     */
-    @Override
-    public Boolean isPreprocess(int taskId) {
-        LabelTask task = this.labelTaskMapper.selectById(taskId);
-        QueryWrapper<LabelDatasetFile> wrapper = new QueryWrapper<>();
-        wrapper.eq("dataset_id", task.getLabelDatasetId()).isNull("preprocess_path");
-        return labelDatasetFileService.list(wrapper).size() != 0;
     }
 }

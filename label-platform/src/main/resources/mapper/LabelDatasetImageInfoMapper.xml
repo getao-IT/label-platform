@@ -10,7 +10,7 @@
             <if test="labelDatasetImageRequest.searchParamList!=null">
                 AND
                 <foreach collection="labelDatasetImageRequest.searchParamList" item="searchParam" open="(" close=")" separator="AND">
-                    CONCAT(image_name,source,user_name,keywords) like '%${searchParam}%'
+                    CONCAT(image_name,source,user_name,keywords) ilike '%${searchParam}%'
                 </foreach>
             </if>
 
@@ -47,7 +47,7 @@
             <if test="labelTaskFileSearchRequest.searchParamList!=null">
                 AND
                 <foreach collection="labelTaskFileSearchRequest.searchParamList" item="searchParam" open="(" close=")" separator="AND">
-                    CONCAT(image_name,source) like '%${searchParam}%'
+                    CONCAT(image_name,source) ilike '%${searchParam}%'
                 </foreach>
             </if>
         </where>

@@ -49,10 +49,10 @@
     <select id="getLabelTaskStatusRate" parameterType="java.lang.Integer" resultType="java.util.HashMap">
         SELECT
             status,
-            COUNT (id)
+            COUNT ( "id" )
         FROM
             label_dataset_file AS ldf,
-            ( SELECT dataset_id FROM label_project WHERE id = #{projectId} ) AS lp
+            ( SELECT dataset_id FROM label_project WHERE "id" = #{projectId} ) AS lp
         WHERE
             ldf.dataset_id = lp.dataset_id
         GROUP BY

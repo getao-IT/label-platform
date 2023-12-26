@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 @Service("VIDEO-LABEL-FILE-SERVICE")
@@ -26,11 +25,6 @@ public class VideoLabelFileService implements LabelFileService {
 
     @Override
     public String importLabelXML(String filePath, LabelPointType labelPointType, MultipartFile file) {
-        return null;
-    }
-
-    @Override
-    public String importLabelFromXzFile(String filePath, LabelPointType labelPointType, File file) {
         return null;
     }
 

@@ -5,6 +5,7 @@ import cn.iecas.geoai.labelplatform.aop.annotation.Log;
 import cn.iecas.geoai.labelplatform.entity.common.CommonResult;
 import cn.iecas.geoai.labelplatform.entity.common.PageResult;
 import cn.iecas.geoai.labelplatform.service.FavoriteCollectionService;
+import cn.iecas.geoai.labelplatform.util.EncryptUtils;
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +37,8 @@ public class FavoriteCollectionController {
 
     @Log(value = "用户将文件从收藏夹移除")
     @DeleteMapping
-    public CommonResult<String> deleteFavoriteFile(int userId, @RequestParam("fileIdList") List<Integer> fileIdList){
-        this.favoriteCollectionService.deleteFromFavoriteCollection(userId,fileIdList);
+    public CommonResult<String> deleteFavoriteFile(int userId, @RequestParam("fileIdList") List<Object> fileIdList){
+        this.favoriteCollectionService.deleteFromFavoriteCollection(userId, EncryptUtils.decryptIdAndInt(fileIdList));
         return new CommonResult<String>().success().message("从用户数据集收藏夹删除成功");
     }
 

@@ -51,7 +51,6 @@ public class LabelDatasetFileServiceImpl extends ServiceImpl<LabelDatasetFileMap
     @Autowired
     private LabelProjectService labelProjectService;
 
-
     /**
      * 根据标注任务，标注员申请标注数据
      * @param labelTask 标注任务信息
@@ -126,7 +125,7 @@ public class LabelDatasetFileServiceImpl extends ServiceImpl<LabelDatasetFileMap
         queryWrapper.eq("dataset_id",labelTaskFileSearchRequest.getLabelDatasetId())
                 .eq(labelTaskFileSearchRequest.getFileId()>0,"file_id",labelTaskFileSearchRequest.getFileId())
                 .eq(labelTaskFileSearchRequest.getStatus()!=null,"status",labelTaskFileSearchRequest.getStatus())
-                .eq(labelTaskFileSearchRequest.getLabelTaskType() == LabelTaskType.LABEL && !labelTaskFileSearchRequest.isCooperate(),"label_user_id",labelTaskFileSearchRequest.getUserId())
+                .eq(labelTaskFileSearchRequest.getLabelTaskType() == LabelTaskType.LABEL,"label_user_id",labelTaskFileSearchRequest.getUserId())
                 .eq(labelTaskFileSearchRequest.getLabelTaskType() == LabelTaskType.CHECK,"check_user_id",labelTaskFileSearchRequest.getUserId())
                 .orderByDesc("assign_label_time","id");
         labelDatasetFileList =  this.list(queryWrapper);
@@ -231,7 +230,7 @@ public class LabelDatasetFileServiceImpl extends ServiceImpl<LabelDatasetFileMap
                 labelDatasetOrProjectFileInfo.setSource(String.valueOf(fileMap.get(String.valueOf(labelDatasetFile.getFileId())).get("source")));
             }
             if (labelDatasetFileRequest.getDatasetType() != DatasetType.TEXT && labelDatasetFileRequest.isFromProject()) {
-                JSONObject fileInfoById = this.fileService.getFileInfoById(labelDatasetFile.getFileId(), labelDatasetFileRequest.getDatasetType(),null);
+                JSONObject fileInfoById = this.fileService.getFileInfoById(labelDatasetFile.getFileId(), labelDatasetFileRequest.getDatasetType());
                 labelDatasetOrProjectFileInfo.setPublisherName(String.valueOf(fileInfoById.get("userName")));
                 labelDatasetOrProjectFileInfo.setSource(String.valueOf(fileInfoById.get("source")));
             }

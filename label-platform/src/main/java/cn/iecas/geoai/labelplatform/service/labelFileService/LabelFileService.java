@@ -9,13 +9,11 @@ import cn.iecas.geoai.labelplatform.entity.emun.LabelPointType;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 public interface LabelFileService {
     String exportXML(LabelExportParam labelExportParam);
     String importLabelXML(String filePath, LabelPointType labelPointType, MultipartFile file);
-    String importLabelFromXzFile(String filePath, LabelPointType labelPointType, File file);
     String createManifest(LabelDataset labelDataset, List<LabelDatasetFile> labelDatasetFileList);
 
 }

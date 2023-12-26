@@ -26,5 +26,4 @@ public class LabelTaskFileSearchRequest {
     private LabelStatus status;
     private LabelTaskType labelTaskType;
     private List<String> searchParamList;
-    private boolean cooperate;
 }

@@ -95,7 +95,6 @@ public class LabelTaskFileInfo {
      */
     private LabelStatus status;
 
-    private String preprocessPath;
 
 
 

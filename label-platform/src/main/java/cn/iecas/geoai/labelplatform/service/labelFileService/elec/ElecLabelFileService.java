@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 @Slf4j
@@ -26,11 +25,6 @@ public class ElecLabelFileService implements LabelFileService {
 
     @Override
     public String importLabelXML(String filePath, LabelPointType labelPointType, MultipartFile file) {
-        return null;
-    }
-
-    @Override
-    public String importLabelFromXzFile(String filePath, LabelPointType labelPointType, File file) {
         return null;
     }
 

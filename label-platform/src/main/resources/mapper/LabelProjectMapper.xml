@@ -19,7 +19,7 @@
              label_project AS lp
                  LEFT JOIN
                  label_dataset AS ld
-                 ON lp.dataset_id = ld.id
+                 ON lp.dataset_id = ld."id"
         <where>
             lp.user_id = #{labelProjectSearchRequest.userId}
             <if test="labelProjectSearchRequest.projectName!=null and labelProjectSearchRequest.projectName!=''">
@@ -55,7 +55,7 @@
         FROM
             label_project
         WHERE
-            id IN
+            "id" IN
                    <foreach collection="labelProjectIds" item="project" open="(" close=")" separator=",">
                         #{project}
                    </foreach>
@@ -68,7 +68,7 @@
         FROM
              file_image_info AS fii,
              label_dataset_file AS ldf
-        WHERE fii.id = ldf.file_id
+        WHERE fii."id" = ldf.file_id
           AND ldf.dataset_id =
               (
                   SELECT
@@ -76,7 +76,7 @@
                   FROM
                        label_project
                   WHERE
-                        id = #{params.projectId}
+                        "id" = #{params.projectId}
               )
           <choose>
               <when test="params.startTime!=null and params.endTime!=null">
@@ -102,7 +102,7 @@
             file_image_info AS fii,
             label_dataset_file AS ldf
         WHERE
-            fii.id = ldf.file_id
+            fii."id" = ldf.file_id
           AND ldf.dataset_id =
               (
                   SELECT
@@ -110,7 +110,7 @@
                   FROM
                       label_project
                   WHERE
-                      id = #{projectId}
+                      "id" = #{projectId}
               )
     </select>
 
@@ -127,7 +127,7 @@
             file_image_info AS fii,
             label_dataset_file AS ldf
         WHERE
-              fii.id = ldf.file_id
+              fii."id" = ldf.file_id
             AND ldf.dataset_id =
             (
                 SELECT
@@ -135,7 +135,7 @@
                 FROM
                     label_project
                 WHERE
-                    id = #{params.projectId}
+                    "id" = #{params.projectId}
             )
     </select>
 
@@ -147,7 +147,7 @@
             file_image_info AS fii,
             label_dataset_file AS ldf
         WHERE
-              fii.id = ldf.file_id
+              fii."id" = ldf.file_id
               AND ldf.dataset_id =
               (
                 SELECT
@@ -155,7 +155,7 @@
                 FROM
                     label_project
                 WHERE
-                    id = #{params.projectId}
+                    "id" = #{params.projectId}
               )
         <choose>
             <when test="params.minLon!=null and params.maxLon!=null">

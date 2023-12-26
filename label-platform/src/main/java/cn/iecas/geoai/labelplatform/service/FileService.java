@@ -13,11 +13,11 @@ import java.util.Map;
 import java.util.Set;
 
 public interface FileService {
-    JSONObject getFileInfoById(int fileId,String token);
-    JSONObject getFileInfoById(int fileId, DatasetType datasetType,String token);
+    JSONObject getFileInfoById(int fileId);
+    JSONObject getFileInfoById(int fileId, DatasetType datasetType);
     List<Integer> listFileIdBySearch(LabelDataset labelDataset);
     JSONArray getAllFileIdList(FileSearchParam fileSearchParam);
-    List<JSONObject> listFileInfoByIdList(List<Integer> fileIdList, DatasetType datasetType,String token) throws ResourceAccessException;
+    List<JSONObject> listFileInfoByIdList(List<Integer> fileIdList, DatasetType datasetType) throws ResourceAccessException;
     PageResult<JSONObject> getFileInfoByPage(FileSearchParam fileSearchParam);
     Map<Integer, JSONObject> getFileByContentId(String fileType, Set<Integer> fileIds);
 }

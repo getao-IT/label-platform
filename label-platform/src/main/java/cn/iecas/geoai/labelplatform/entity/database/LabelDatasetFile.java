@@ -107,10 +107,4 @@ public class LabelDatasetFile implements Serializable {
      */
     @Column(nullable = true)
     private int relatedFileId;
-
-    /**
-     * 预处理结果路径
-     */
-    @Column(name = "preprocess_path")
-    private String preprocessPath;
 }

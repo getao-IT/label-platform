@@ -7,7 +7,7 @@ import cn.iecas.geoai.labelplatform.entity.common.PageResult;
 import cn.iecas.geoai.labelplatform.entity.domain.LabelDataset;
 import cn.iecas.geoai.labelplatform.entity.dto.*;
 import cn.iecas.geoai.labelplatform.service.LabelDatasetService;
-import cn.iecas.geoai.labelplatform.util.CollectionsUtils;
+import cn.iecas.geoai.labelplatform.util.EncryptUtils;
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -46,16 +46,6 @@ public class DatasetController {
         return new CommonResult<PageResult<LabelDataset>>().data(pageResult).success().message("查询数据集信息成功");
     }
 
-    /*@ApiOperation("获取用户所有数据集的名称")
-    @Log(value = "获取用户所有数据集的名称")
-    @GetMapping(value = "/name")
-    public CommonResult<List<Map.Entry<Integer,String>>> getLabelDatasetNames(*//*@Min(value = 0,message = "userId必须为正整数") *//*int userId, DatasetType datasetType){
-        Map<Integer,String> datasetNameList = this.labelDatasetService.getDatasetNameList(userId,datasetType);
-        datasetNameList = CollectionsUtils.sortMapByNumKey(datasetNameList, CollectionsUtils.SORT_DESC);
-        List<Map.Entry<Integer, String>> result = CollectionsUtils.parseMapToList(datasetNameList);
-        return new CommonResult<List<Map.Entry<Integer,String>>>().data(result).success().message("查询数据集名称成功");
-    }*/
-
     @ApiOperation("获取用户所有数据集的名称")
     @Log(value = "获取用户所有数据集的名称")
     @GetMapping(value = "/name")
@@ -82,9 +72,9 @@ public class DatasetController {
 
     @ApiOperation("删除数据集")
     @Log(value = "删除数据集")
-    @DeleteMapping(value = "/{datasetIdList}")
-    public CommonResult<String> deleteLabelDataset(@PathVariable("datasetIdList") List<Integer> datasetIdList){
-        labelDatasetService.deleteLabelDataset(datasetIdList);
+    @DeleteMapping
+    public CommonResult<String> deleteLabelDataset(@RequestParam("datasetIdList") List<Object> datasetIdList){
+        labelDatasetService.deleteLabelDataset(EncryptUtils.decryptIdAndInt(datasetIdList));
         return new CommonResult<String>().success().message("删除数据集成功");
     }
 

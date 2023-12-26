@@ -16,7 +16,6 @@ import cn.iecas.geoai.labelplatform.entity.fileFormat.LabelObject;
 import cn.iecas.geoai.labelplatform.entity.fileFormat.XMLLabelObjectInfo;
 import cn.iecas.geoai.labelplatform.service.*;
 import cn.iecas.geoai.labelplatform.service.labelFileService.LabelFileService;
-import cn.iecas.geoai.labelplatform.util.CollectionsUtils;
 import cn.iecas.geoai.labelplatform.util.LabelPointTypeConvertor;
 import cn.iecas.geoai.labelplatform.util.XMLUtils;
 import com.alibaba.fastjson.JSONObject;
@@ -27,7 +26,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.json.xml.XMLSerializer;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -52,7 +50,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-//@Transactional
+@Transactional
 public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,LabelDataset> implements LabelDatasetService {
 
     @Value("${value.dir.rootDir}")
@@ -127,7 +125,7 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
         queryWrapper.select("file_id").eq("dataset_id",labelProject.getDatasetId());
         List<LabelDatasetFile> labelDatasetFileInfos = this.labelDatasetFileService.list(queryWrapper);
         List<Integer> fileIdList = labelDatasetFileInfos.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
-        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,DatasetType.IMAGE,null);
+        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,DatasetType.IMAGE);
 
         for (JSONObject fileInfo : fileInfoList) {
             String imageName = fileInfo.getString("imageName");
@@ -465,7 +463,7 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
         queryWrapper.select("file_id","label", "related_file_id").eq("dataset_id",datasetId).eq("status",LabelStatus.FINISH);
         List<LabelDatasetFile> labelDatasetFileList = this.labelDatasetFileService.list(queryWrapper);
         List<Integer> fileIdList = labelDatasetFileList.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
-        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,labelDataset.getDatasetType(),null);
+        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,labelDataset.getDatasetType());
 //        if (labelDataset.getDatasetType() == DatasetType.TEXT){
 //            for (LabelDatasetFile labelDatasetFile : labelDatasetFileList) {
 //                JSONObject fileInfo = fileInfoList.get(0);
@@ -617,23 +615,10 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
             labelDatasetFileList.forEach(labelDatasetImage -> {labelDatasetImage.setLabel(null);labelDatasetImage.setAiLabel(null);});
         if (labelDataset.getCategory().equals("任务生成"))
             labelDatasetFileList = labelDatasetFileList.stream().map(f -> {
-                f.setAssignLabelTime(null);f.setAssignCheckTime(null);f.setFinishLabelTime(null);f.setFinishCheckTime(null);f.setCheckUserId(0);f.setLabelUserId(0);
+                f.setAssignLabelTime(null);f.setAssignCheckTime(null);f.setFinishLabelTime(null);f.setFinishCheckTime(null);f.setCheckUserId(-1);f.setLabelUserId(-1);
                 return f;
             }).collect(Collectors.toList());
-        if (labelProject.isPreprocessing())
-            labelDatasetFileList.forEach(f -> {
-                f.setStatus(LabelStatus.AILABELING);
-            });
-        if (labelProject.isCooperate() && !labelProject.isPreprocessing())
-            labelDatasetFileList.forEach(f -> f.setStatus(LabelStatus.LABELING));
         this.labelDatasetFileService.saveBatch(labelDatasetFileList);
-
-        if (labelProject.isCooperate()) {
-            List<LabelDatasetFile> datasetFileList = this.labelDatasetFileService.list(
-                    new QueryWrapper<LabelDatasetFile>().eq("dataset_id", labelDataset.getId()));
-            List<Integer> imageIds = datasetFileList.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
-            labelProject.setImageIds(imageIds);
-        }
         labelProject.setTotalCount(labelDatasetFileList.size());
         return labelDataset.getId();
     }
@@ -663,7 +648,8 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
         List<LabelDatasetFile> labelDatasetFileList = new ArrayList<>();
         for (Integer fileId : fileIdList) {
             LabelDatasetFile labelDatasetFile = LabelDatasetFile.builder()
-                    .datasetId(datasetId).fileId(fileId).status(LabelStatus.UNAPPLIED).build();
+                    .datasetId(datasetId).fileId(fileId).status(LabelStatus.UNAPPLIED)
+                    .labelUserId(-1).checkUserId(-1).build();
             labelDatasetFileList.add(labelDatasetFile);
         }
 

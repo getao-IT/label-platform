@@ -6,7 +6,6 @@
     <select id="listLabelTaskInfos" resultType="cn.iecas.geoai.labelplatform.entity.dto.LabelTaskInfo">
         SELECT
         lt.id,
-        lp.id as labelProjectId,
         lt.total_count,
         lp.project_name,
         lt.finish_count,

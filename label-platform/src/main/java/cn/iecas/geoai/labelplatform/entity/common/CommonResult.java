@@ -1,10 +1,7 @@
 package cn.iecas.geoai.labelplatform.entity.common;
 
-import cn.iecas.geoai.labelplatform.util.CollectionsUtils;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
-
-import java.util.Map;
 
 @Data
 public class CommonResult<T> {

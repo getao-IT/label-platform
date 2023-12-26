@@ -7,7 +7,7 @@ import cn.iecas.geoai.labelplatform.entity.domain.*;
 import cn.iecas.geoai.labelplatform.entity.dto.*;
 import cn.iecas.geoai.labelplatform.service.LabelDatasetService;
 import cn.iecas.geoai.labelplatform.service.LabelProjectService;
-import cn.iecas.geoai.labelplatform.service.UserInfoService;
+import cn.iecas.geoai.labelplatform.util.EncryptUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.Api;
@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -71,9 +72,9 @@ public class LabelProjectController {
 
     @Log(value = "删除标注项目")
     @ApiOperation("删除标注项目")
-    @DeleteMapping(value = "/{projectIdList}")
-    public CommonResult<String> deleteProjects(@PathVariable(value = "projectIdList") @NotEmpty(message = "项目id列表不能为空") List<Integer> projectIdList){
-        labelProjectService.deleteLabelProject(projectIdList);
+    @DeleteMapping
+    public CommonResult<String> deleteProjects(@RequestParam(value = "projectIdList") @NotEmpty(message = "项目id列表不能为空") List<Object> projectIdList){
+        labelProjectService.deleteLabelProject(EncryptUtils.decryptIdAndInt(projectIdList));
         return new CommonResult<String>().success().message("删除标注项目成功");
     }
 
@@ -82,7 +83,6 @@ public class LabelProjectController {
     @ApiOperation("创建新的标注项目")
     @Log(value = "创建新的标注项目")
     public CommonResult<String> createLabelProject(@RequestBody LabelProject labelProject, HttpServletRequest request){
-        //labelProject.setCooperate(true);
         this.labelProjectService.createLabelProject(labelProject,request);
         return new CommonResult<String>().success().message("创建新的标注项目成功");
     }
@@ -191,6 +191,7 @@ public class LabelProjectController {
         List<LabelProject> result = this.labelProjectService.getProjectsByRelateDataset(projectId, relatedDatasetId);
         return new CommonResult<List<LabelProject>>().success().data(result).message("获取重叠数据集项目成功");
     }
+
 
     /**
      * 时空覆盖率：以不同统计标准返回对应标准影像个数

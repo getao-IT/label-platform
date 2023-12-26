@@ -1,6 +1,5 @@
 package cn.iecas.geoai.labelplatform.service.labelFileService.image;
 
-import cn.aircas.utils.comporess.CompressUtil;
 import cn.aircas.utils.file.FileUtils;
 import cn.aircas.utils.image.geo.GeoUtils;
 import cn.iecas.geoai.labelplatform.entity.domain.Image;
@@ -31,8 +30,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -224,43 +221,6 @@ public class ImageLabelFileService implements LabelFileService {
     }
 
     @Override
-    public String importLabelFromXzFile(String filePath, LabelPointType labelPointType, File file) {
-        filePath = FileUtils.getStringPath(this.rootDir,filePath);
-        LabelObject labelObject = null;
-
-        try{
-            labelObject = XMLUtils.parseXMLFromStream(new FileInputStream(file), XMLLabelObjectInfo.class);
-            file.delete();
-        }catch (IOException e){
-            log.error("解析真值文件:{} 出错",file.getAbsolutePath());
-            return null;
-        }
-
-
-        String originalCoordinateType = labelObject.getCoordinate();
-        CoordinateConvertType coordinateConvertType = CoordinateConvertType.NO_ACTION;
-
-        if(labelPointType.name().equalsIgnoreCase(originalCoordinateType)){
-            if (LabelPointType.GEODEGREE ==labelPointType && GeoUtils.isProjection(filePath))
-                coordinateConvertType = CoordinateConvertType.LONLAT_TO_PROJECTION;
-            if (LabelPointType.PIXEL == labelPointType)
-                coordinateConvertType = CoordinateConvertType.PIXEL_REVERSION;
-        }else {
-            if (LabelPointType.GEODEGREE == labelPointType){
-                if (GeoUtils.isProjection(filePath))
-                    coordinateConvertType = CoordinateConvertType.PIXEL_TO_PROJECTION;
-                else
-                    coordinateConvertType = CoordinateConvertType.PIXEL_TO_LONLAT;
-            }else
-                coordinateConvertType = CoordinateConvertType.LONLAT_TO_PIXEL;
-        }
-
-
-        LabelPointTypeConvertor.convertLabelPointType(filePath,labelObject,coordinateConvertType);
-        return labelObject.toJSONObject().toString();
-    }
-
-    @Override
     public String importLabelXML(String filePath, LabelPointType labelPointType, MultipartFile file) {
 
         filePath = FileUtils.getStringPath(this.rootDir,filePath);
@@ -323,7 +283,7 @@ public class ImageLabelFileService implements LabelFileService {
             LabelPointTypeConvertor.convertLabelPointType(imagePath,labelObject,coordinateConvertType);
 
             // 获取标注真实文件信息
-            JSONObject labelRelatedFile = fileService.getFileInfoById(labelDatasetFile.getFileId(),null);
+            JSONObject labelRelatedFile = fileService.getFileInfoById(labelDatasetFile.getFileId());
             Image image = new Image();
             image.setId(imageInfo.getInteger("id"));
             image.setImageName(imageInfo.getString("imageName"));
@@ -333,7 +293,7 @@ public class ImageLabelFileService implements LabelFileService {
             // 获取对比文件信息
             Image changeImage = new Image();
             if (labelDatasetFile.getRelatedFileId() != 0) {
-                JSONObject changeFile = fileService.getFileInfoById(labelDatasetFile.getRelatedFileId(),null);
+                JSONObject changeFile = fileService.getFileInfoById(labelDatasetFile.getRelatedFileId());
                 changeImage.setId(Integer.parseInt(String.valueOf(changeFile.get("id"))));
                 changeImage.setImageName(String.valueOf(changeFile.get("imageName")));
                 changeImage.setSource(String.valueOf(changeFile.get("source")));

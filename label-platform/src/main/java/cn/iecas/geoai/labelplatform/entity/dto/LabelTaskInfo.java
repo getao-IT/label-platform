@@ -14,11 +14,6 @@ public class LabelTaskInfo {
      */
     private int id;
 
-    /**
-     * 标注项目ID
-     */
-    private int labelProjectId;
-
 
     /**
      * 完成总数

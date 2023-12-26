@@ -6,13 +6,10 @@ server:
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://192.168.3.13:32189/geodl_iecas?useSSL=false&useUnicode=true&characterEncoding=utf8
-    username: iecas
+    url: jdbc:postgresql://127.0.0.1:5432/postgres?useSSL=false&useUnicode=true&characterEncoding=utf8
+    username: postgres
     password: 123456
-  servlet:
-    multipart:
-      max-file-size: 100MB
-      max-request-size: 100MB
+
   aop:
     proxy-target-class: true
 
@@ -91,7 +88,7 @@ value:
     call-service: http://192.168.9.64:32299/api/v1/task
     task-status: http://192.168.9.64:32299/api/v1/task/status
     task-result: http://192.168.9.64:32299/api/v1/task/result
-    preprocessing: http://192.168.9.62:32146/preprocessing
+
   database:
     enable: false
     dbName: geodl_iecas
@@ -118,6 +115,8 @@ auth:
     - /geoai/V1/label-platform/swagger-resources/**
     - /geoai/V1/label-platform/v2/**
     - /geoai/V1/label-platform/status/**
+    # 忽略全部
+    - /geoai/V1/label-platform/*
 swagger:
   enabled: true
   base-package: cn.iecas.geoai.labelplatform.controller

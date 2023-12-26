@@ -43,9 +43,6 @@ public class LabelProject implements Serializable {
     @TableField
     private Boolean isAiLabel = false;
 
-    @TableField(exist = false)
-    private boolean preprocessing;
-
     /**
      * 标注项目创建时间
      */
@@ -186,16 +183,5 @@ public class LabelProject implements Serializable {
      */
     @TableField(exist = false)
     private boolean unite;
-
-    /**
-     * 是否创建协同标注项目
-     */
-    private boolean cooperate;
-
-    /**
-     * 该标注项目影像ID
-     */
-    @TableField(exist = false)
-    private List<Integer> imageIds;
 }
 
