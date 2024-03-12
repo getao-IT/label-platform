@@ -17,6 +17,7 @@ import cn.iecas.geoai.labelplatform.entity.fileFormat.XMLLabelObjectInfo;
 import cn.iecas.geoai.labelplatform.service.*;
 import cn.iecas.geoai.labelplatform.service.labelFileService.LabelFileService;
 import cn.iecas.geoai.labelplatform.util.LabelPointTypeConvertor;
+import cn.iecas.geoai.labelplatform.util.UserUtils;
 import cn.iecas.geoai.labelplatform.util.XMLUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -60,6 +61,9 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
     private FileService fileService;
 
     @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
     private LabelTaskService labelTaskService;
 
     @Autowired
@@ -82,6 +86,9 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
 
     @Autowired
     private LabelDatasetMapper labelDatasetMapper;
+
+    @Autowired
+    private UserUtils userUtils;
 
 
     @Override
@@ -339,7 +346,9 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
                         "category", labelDatasetsSearchRequest.getCategory())
                 .like("dataset_name",datasetName)
                 .orderByDesc("create_time")
-                .and(Wrapper->Wrapper.eq("user_id",labelDatasetsSearchRequest.getUserId()).or().eq("is_public",true));
+                .and(!userUtils.isAdmin(request.getHeader("token")),
+                        Wrapper->Wrapper.eq("user_id",labelDatasetsSearchRequest.getUserId())
+                                .or().eq("user_id",0).or().eq("is_public",true));
         IPage<LabelDataset> iPage = this.page(page,queryWrapper);
         return new PageResult<>(iPage.getCurrent(), iPage.getTotal(), iPage.getRecords());
     }

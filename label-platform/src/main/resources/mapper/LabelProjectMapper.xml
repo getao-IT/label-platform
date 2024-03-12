@@ -21,7 +21,7 @@
                  label_dataset AS ld
                  ON lp.dataset_id = ld."id"
         <where>
-            lp.user_id = #{labelProjectSearchRequest.userId}
+            (lp.user_id = #{labelProjectSearchRequest.userId} or lp.user_id = 0)
             <if test="labelProjectSearchRequest.projectName!=null and labelProjectSearchRequest.projectName!=''">
                 and lower(concat(lp.project_name)) like lower('%${labelProjectSearchRequest.projectName}%')
             </if>

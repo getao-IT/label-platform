@@ -73,7 +73,8 @@ value:
   api:
     file-info: http://192.168.3.13:18082/geoai/v1/file
     get-file-by-contentid: http://192.168.3.13:18082/geoai/v1/file/text/getFileByContentId
-    user-info: http://192.168.2.156:31151/api/v1/users/token_check
+#    user-info: http://192.168.2.169:31151/api/v1/users/token_check
+    user-info: http://192.168.2.169:31151/api/v1/users/token_check
     user-info-export: http://192.168.2.156:31151/api/v1/users/export
     sampleset-creation: http://localhost:28000/geoapi/V1/sampleset-platform/sampleset/creation
     file-info-idList: http://192.168.3.13:18082/geoai/v1/file
@@ -107,7 +108,7 @@ value:
     views:
       - label_dataset_image_info
 auth:
-  enabled: true
+  enabled: false
   user-info-url: http://192.168.2.156:31151/api/v1/users/token_check
   ignore-url-list:
     - /geoai/V1/label-platform/swagger-ui.html
