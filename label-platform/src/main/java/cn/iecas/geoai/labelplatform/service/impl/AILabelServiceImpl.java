@@ -401,9 +401,9 @@ public class AILabelServiceImpl implements AILabelService {
             jsonObject.put("input_file", params.getImagePathList());
             jsonObject.put("output_file", outputFileList);
         }
-        jsonObject.put("source_service_id", params.getSource_service_id());
+        //jsonObject.put("source_service_id", params.getSource_service_id());
         jsonObject.put("working_type", params.getWorking_type());
-        jsonObject.put("running_type", params.getRunning_type());
+        //jsonObject.put("running_type", params.getRunning_type());
 //        ResourceInfo resourceInfo = ResourceInfo.builder()
 //                .cpu_count(params.getResource_info().getCpu_count())
 //                .mem_size(params.getResource_info().getMem_size())

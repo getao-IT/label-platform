@@ -2,6 +2,7 @@ package cn.iecas.geoai.labelplatform.service;
 
 import cn.iecas.geoai.labelplatform.entity.common.DatasetType;
 import cn.iecas.geoai.labelplatform.entity.common.PageResult;
+import cn.iecas.geoai.labelplatform.entity.domain.FileInfo;
 import cn.iecas.geoai.labelplatform.entity.domain.LabelDataset;
 import cn.iecas.geoai.labelplatform.entity.dto.FileSearchParam;
 import com.alibaba.fastjson.JSONArray;
@@ -20,4 +21,5 @@ public interface FileService {
     List<JSONObject> listFileInfoByIdList(List<Integer> fileIdList, DatasetType datasetType) throws ResourceAccessException;
     PageResult<JSONObject> getFileInfoByPage(FileSearchParam fileSearchParam);
     Map<Integer, JSONObject> getFileByContentId(String fileType, Set<Integer> fileIds);
+    void updateFileInfoById(String fileType, Set<Integer> fileIds, FileInfo fileInfo);
 }

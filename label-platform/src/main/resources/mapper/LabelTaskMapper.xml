@@ -18,7 +18,7 @@
         lp.finish_count as project_finish_count
         from label_task lt
         LEFT JOIN label_project lp on (lp.id = lt.label_project_id)
-        WHERE lt.task_type = #{labelTaskSearchRequest.taskType} and lt.user_id =#{labelTaskSearchRequest.userId}
+        WHERE lt.task_type = #{labelTaskSearchRequest.taskType}
         <if test="labelTaskSearchRequest.projectName!=null">
             and lp.project_name like '%${labelTaskSearchRequest.projectName}%'
         </if>

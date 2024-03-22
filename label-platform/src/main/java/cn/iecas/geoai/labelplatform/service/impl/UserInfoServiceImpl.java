@@ -79,13 +79,13 @@ public class UserInfoServiceImpl implements UserInfoService {
      * @return
      */
     @Override
-    public CommonResult<UserInfo> getUserInfoByToken(String token) throws ResourceAccessException {
+    public CommonResult<JSONObject> getUserInfoByToken(String token) throws ResourceAccessException {
         log.info("开始验证token");
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("token",token);
         HttpEntity<String> httpEntity = new HttpEntity<>(null,httpHeaders);
 
-        CommonResult result = new CommonResult();
+        CommonResult<JSONObject> result = new CommonResult();
 
         try {
             JSONObject jsonResult = restTemplate.exchange(userInfoApi, HttpMethod.GET,httpEntity, JSONObject.class).getBody();

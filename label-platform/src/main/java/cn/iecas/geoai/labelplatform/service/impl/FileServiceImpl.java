@@ -3,6 +3,8 @@ package cn.iecas.geoai.labelplatform.service.impl;
 import cn.aircas.utils.date.DateUtils;
 import cn.iecas.geoai.labelplatform.entity.common.DatasetType;
 import cn.iecas.geoai.labelplatform.entity.common.PageResult;
+import cn.iecas.geoai.labelplatform.entity.domain.FileInfo;
+import cn.iecas.geoai.labelplatform.entity.domain.Image;
 import cn.iecas.geoai.labelplatform.entity.domain.LabelDataset;
 import cn.iecas.geoai.labelplatform.entity.dto.FileSearchParam;
 import cn.iecas.geoai.labelplatform.entity.dto.LabelDatasetFileRequest;
@@ -44,6 +46,9 @@ public class FileServiceImpl implements FileService {
 
     @Value(value = "${value.api.get-file-by-contentid}")
     private String getFileByContentIdUrl;
+
+    @Value(value = "${value.api.updateFileInfoById}")
+    private String updateFileInfoById;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -151,6 +156,18 @@ public class FileServiceImpl implements FileService {
             postForWarning();
         }
         return result!=null ? JSONObject.parseObject(result.toJSONString(),PageResult.class) : null;
+    }
+
+    @Override
+    public void updateFileInfoById(String fileType, Set<Integer> fileIds, FileInfo fileInfo) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("token", request.getHeader("token"));
+        HttpEntity<JSONObject> httpEntity = new HttpEntity<JSONObject>(null, httpHeaders);
+        updateFileInfoById = updateFileInfoById + "/"+fileIds.toString().replace("[","").replace("]","").replace(" ","")+"/";
+        UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(updateFileInfoById)
+                .queryParam("fileType", fileType).queryParam("isPublic", fileInfo.getIsPublic()).build();
+        JSONObject body = restTemplate.exchange(uriComponents.toUri(), HttpMethod.PUT, httpEntity, JSONObject.class).getBody();
+        log.info("创建数据集更新文件成功： {}", body.toJSONString());
     }
 
     @Override

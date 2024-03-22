@@ -6,6 +6,7 @@ import cn.aircas.utils.image.ImageFormat;
 import cn.iecas.geoai.labelplatform.dao.LabelProjectMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelTaskMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelTaskStatisInfoMapper;
+import cn.iecas.geoai.labelplatform.entity.common.CommonResult;
 import cn.iecas.geoai.labelplatform.entity.common.DatasetType;
 import cn.iecas.geoai.labelplatform.entity.common.PageResult;
 import cn.iecas.geoai.labelplatform.entity.domain.*;
@@ -110,6 +111,9 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
     @Autowired
     private FFmpegFrameGrabberUtils fFmpegFrameGrabberUtils;
 
+    @Autowired
+    private UserInfoService userInfoService;
+
     @Value("${value.api.query-username-byuserid}")
     private String getUserNameApiUrl;
 
@@ -146,15 +150,19 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
         if (imageIdList.size()!=0)
             updateTaskProgress(labelTask,imageIdList);
 
-        // 更新统计信息：申领文件数
-        QueryWrapper<LabelTaskStatisInfo> wrapper = new QueryWrapper();
-        wrapper.eq("label_project_id", labelTask.getLabelProjectId())
-                .eq("user_id", labelTask.getUserId())
-                .eq("user_role", labelTask.getTaskType().getValue());
-        LabelTaskStatisInfo taskStatisInfo = this.taskStatisInfoMapper.selectOne(wrapper);
-        Assert.notNull(taskStatisInfo, "不存在该任务的统计信息");
-        taskStatisInfo.setApplyFileCount(taskStatisInfo.getApplyFileCount()+imageIdList.size());
-        this.taskStatisInfoMapper.updateById(taskStatisInfo);
+        // 更新统计信息：申领文件数，如果不是任务发布时指定的用户，则不对统计信息做处理
+        JSONObject userInfo = this.userInfoService.getUserInfoByToken(request.getHeader("token")).getData();
+
+        if (userInfo.getInteger("id") == labelTask.getUserId()) {
+            QueryWrapper<LabelTaskStatisInfo> wrapper = new QueryWrapper();
+            wrapper.eq("label_project_id", labelTask.getLabelProjectId())
+                    .eq("user_id", labelTask.getUserId())
+                    .eq("user_role", labelTask.getTaskType().getValue());
+            LabelTaskStatisInfo taskStatisInfo = this.taskStatisInfoMapper.selectOne(wrapper);
+            Assert.notNull(taskStatisInfo, "不存在该任务的统计信息");
+            taskStatisInfo.setApplyFileCount(taskStatisInfo.getApplyFileCount()+imageIdList.size());
+            this.taskStatisInfoMapper.updateById(taskStatisInfo);
+        }
 
         return imageIdList;
     }
@@ -556,6 +564,7 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
     public PageResult<LabelTaskInfo> getLabelTasks(LabelTaskSearchRequest labelTaskSearchRequest) {
         Page<LabelTaskInfo> labelTaskPage = new Page<>(labelTaskSearchRequest.getPageNo(),labelTaskSearchRequest.getPageSize());
         IPage<LabelTaskInfo> labelTaskInfoIPage = this.labelTaskMapper.listLabelTaskInfos(labelTaskPage,labelTaskSearchRequest);
+
         List<LabelTaskInfo> labelTaskInfoList = labelTaskInfoIPage.getRecords();
 
         for (LabelTaskInfo labelTaskInfo : labelTaskInfoList) {

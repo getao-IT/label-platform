@@ -338,8 +338,9 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
                                 labelDatasetsSearchRequest.getCategory() != "",
                         "category", labelDatasetsSearchRequest.getCategory())
                 .like("dataset_name",datasetName)
-                .orderByDesc("create_time")
-                .and(Wrapper->Wrapper.eq("user_id",labelDatasetsSearchRequest.getUserId()).or().eq("is_public",true));
+                .orderByDesc("create_time");
+                // 李硕柯要求，所有用户可见所有数据集
+                //.and(Wrapper->Wrapper.eq("user_id",labelDatasetsSearchRequest.getUserId()).or().eq("is_public",true));
         IPage<LabelDataset> iPage = this.page(page,queryWrapper);
         return new PageResult<>(iPage.getCurrent(), iPage.getTotal(), iPage.getRecords());
     }
@@ -356,8 +357,8 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
         Map<Integer,String> datasetNameMap = new HashMap<>();
         QueryWrapper<LabelDataset> queryWrapper = new QueryWrapper<>();
         queryWrapper = queryWrapper.select("id","dataset_name").eq("visibility",true)
-                .eq(datasetType!=null,"dataset_type",datasetType)
-                .and(Wrapper->Wrapper.eq("user_id",userId).or().eq("is_public",true));
+                .eq(datasetType!=null,"dataset_type",datasetType).eq("is_public",true);
+//                .and(Wrapper->Wrapper.eq("user_id",userId).or().eq("is_public",true));
         List<LabelDataset> labelDatasetList = this.list(queryWrapper);
         Assert.notEmpty(labelDatasetList,"没有属于该用户的数据集");
         labelDatasetList.forEach(labelDataset -> datasetNameMap.put(labelDataset.getId(),labelDataset.getDatasetName()));
@@ -638,6 +639,7 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
 
         Assert.notEmpty(fileIdList,"请选择创建数据集需要的文件");
         labelDataset.setVisibility(true);
+        labelDataset.setPublic(true);
         labelDataset.setCreateTime(DateUtils.nowDate());
         labelDataset.setCount(fileIdList.size());
         labelDataset.setFinishCount(fileIdList.size());
@@ -661,6 +663,9 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
 
         //this.createManifest(labelDataset,labelDatasetImageList);
         labelDatasetFileService.saveBatch(labelDatasetFileList);
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setIsPublic(true);
+        this.fileService.updateFileInfoById(labelDataset.getDatasetType().getValue(), fileIdList, fileInfo);
     }
 
     /**
