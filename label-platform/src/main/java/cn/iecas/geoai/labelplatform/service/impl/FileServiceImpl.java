@@ -163,8 +163,8 @@ public class FileServiceImpl implements FileService {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("token", request.getHeader("token"));
         HttpEntity<JSONObject> httpEntity = new HttpEntity<JSONObject>(null, httpHeaders);
-        updateFileInfoById = updateFileInfoById + "/"+fileIds.toString().replace("[","").replace("]","").replace(" ","")+"/";
-        UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(updateFileInfoById)
+        String url = updateFileInfoById + "/"+fileIds.toString().replace("[","").replace("]","").replace(" ","")+"/";
+        UriComponents uriComponents = UriComponentsBuilder.fromHttpUrl(url)
                 .queryParam("fileType", fileType).queryParam("isPublic", fileInfo.getIsPublic()).build();
         JSONObject body = restTemplate.exchange(uriComponents.toUri(), HttpMethod.PUT, httpEntity, JSONObject.class).getBody();
         log.info("创建数据集更新文件成功： {}", body.toJSONString());
