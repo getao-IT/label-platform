@@ -388,7 +388,10 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
         LabelDataset labelDataset = this.getById(datasetId);
         Assert.notNull(labelDataset,"查找的数据集不存在");
         File file = FileUtils.getFile(this.rootDir,labelDataset.getDatasetPath(),"manifest.json");
-        Assert.isTrue(file.exists(),"数据的manifest文件不存在");
+        if (!file.exists()) {
+            this.createManifest(labelDataset);
+            log.info("创建无标注的数据集manifest文件成功：{}", labelDataset.getDatasetPath());
+        }
         downloadFile(file,httpServletResponse);
         log.info("文件下载成功");
     }
@@ -459,9 +462,12 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
     public String createManifest(LabelDataset labelDataset) throws IOException, ResourceAccessException {
         int datasetId = labelDataset.getId();
         LabelProject labelProject = this.labelProjectService.getById(labelDataset.getProjectId());
-        labelDataset.setProjectCategory(labelProject.getCategory());
+        if (labelProject != null && labelDataset.getCategory().equalsIgnoreCase("用户创建"))
+            labelDataset.setProjectCategory(labelProject.getCategory());
+
         QueryWrapper<LabelDatasetFile> queryWrapper = new QueryWrapper<>();
-        queryWrapper.select("file_id","label", "related_file_id").eq("dataset_id",datasetId).eq("status",LabelStatus.FINISH);
+        queryWrapper.select("file_id","label", "related_file_id").eq("dataset_id",datasetId)
+                .eq(!labelDataset.getCategory().equalsIgnoreCase("用户创建"), "status",LabelStatus.FINISH);
         List<LabelDatasetFile> labelDatasetFileList = this.labelDatasetFileService.list(queryWrapper);
         List<Integer> fileIdList = labelDatasetFileList.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
         List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,labelDataset.getDatasetType());

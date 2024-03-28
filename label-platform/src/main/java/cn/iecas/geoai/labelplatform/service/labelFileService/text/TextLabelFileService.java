@@ -15,6 +15,7 @@ import cn.iecas.geoai.labelplatform.service.labelFileService.LabelFileService;
 import cn.iecas.geoai.labelplatform.service.labelFileService.image.ImageManifest;
 import cn.iecas.geoai.labelplatform.util.LabelPointTypeConvertor;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.springframework.beans.BeanUtils;
@@ -46,7 +47,13 @@ public class TextLabelFileService implements LabelFileService {
             int fileId = textInfo.getInteger("id");
             String textName = textInfo.getString("textName");
             String source = textInfo.getString("textSource");
-            JSONObject labelJSON = JSONObject.parseObject(labelDatasetFile.getLabel()).getJSONObject("object");
+            JSONObject labelJSON = new JSONObject();
+            if (labelDatasetFile.getLabel() != null) {
+                labelJSON = JSONObject.parseObject(labelDatasetFile.getLabel()).getJSONObject("object");
+            } else {
+                labelJSON.put("content", "");
+                labelJSON.put("entities", new JSONArray());
+            }
             textManifest.addData(fileId,textName,source,labelJSON);
         }
         return JSON.toJSONString(textManifest, SerializerFeature.WriteMapNullValue, SerializerFeature.PrettyFormat);

@@ -6,6 +6,7 @@ import cn.iecas.geoai.labelplatform.entity.dto.LabelExportParam;
 import cn.iecas.geoai.labelplatform.entity.emun.LabelPointType;
 import cn.iecas.geoai.labelplatform.service.labelFileService.LabelFileService;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,12 @@ public class AudioLabelFileService implements LabelFileService {
             int fileId = audioInfo.getInteger("id");
             String source = audioInfo.getString("source");
             String audioName = audioInfo.getString("audioName");
-            JSONObject labelJSON = JSONObject.parseObject(labelDatasetFile.getLabel()).getJSONObject("object");
+            JSONObject labelJSON = new JSONObject();
+            if (labelDatasetFile.getLabel() != null) {
+                labelJSON = JSONObject.parseObject(labelDatasetFile.getLabel()).getJSONObject("object");
+            } else {
+                labelJSON.put("results", new JSONArray());
+            }
             audioManifest.addData(fileId,audioName,source,labelJSON);
         }
         return JSON.toJSONString(audioManifest, SerializerFeature.WriteMapNullValue, SerializerFeature.PrettyFormat);

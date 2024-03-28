@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import springfox.documentation.spring.web.json.Json;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -265,23 +266,12 @@ public class ImageLabelFileService implements LabelFileService {
         int segmentation = 0;
         ImageManifest imageManifest = new ImageManifest();
         imageManifest.setDatasetInfo(labelDataset);
-        if (labelDataset.getProjectCategory().equalsIgnoreCase("segmentation"))
+        if (labelDataset.getProjectCategory() != null && labelDataset.getProjectCategory().equalsIgnoreCase("segmentation"))
             segmentation = 1;
 
         for (LabelDatasetFile labelDatasetFile : labelDatasetFileList) {
             JSONObject imageInfo = labelDatasetFile.getData();
             JSONObject labelJSON = JSONObject.parseObject(labelDatasetFile.getLabel());
-            LabelObject labelObject = JSONObject.toJavaObject(labelJSON, XMLLabelObjectInfo.class);
-            CoordinateSystemType coordinateSystemType = CoordinateSystemType.valueOf(imageInfo.getString("coordinateSystemType"));
-            CoordinateConvertType coordinateConvertType = CoordinateConvertType.NO_ACTION;
-            if (coordinateSystemType == CoordinateSystemType.PROJCS)
-                coordinateConvertType = CoordinateConvertType.PROJECTION_TO_LONLAT;
-            if (coordinateSystemType == CoordinateSystemType.PIXELCS)
-                coordinateConvertType = CoordinateConvertType.PIXEL_REVERSION;
-
-            String imagePath = FileUtils.getStringPath(this.rootDir, imageInfo.getString("path"));
-            LabelPointTypeConvertor.convertLabelPointType(imagePath,labelObject,coordinateConvertType);
-
             // 获取标注真实文件信息
             JSONObject labelRelatedFile = fileService.getFileInfoById(labelDatasetFile.getFileId());
             Image image = new Image();
@@ -300,6 +290,19 @@ public class ImageLabelFileService implements LabelFileService {
                 changeImage.setPath(String.valueOf(changeFile.get("path")));
                 //BeanUtils.copyProperties(changeFile, changeImage);
             }
+            // 如果数据集存在标注信息才进行标注信息处理
+            LabelObject labelObject = JSONObject.toJavaObject(labelJSON, XMLLabelObjectInfo.class);
+            if (labelObject != null) {
+                CoordinateSystemType coordinateSystemType = CoordinateSystemType.valueOf(imageInfo.getString("coordinateSystemType"));
+                CoordinateConvertType coordinateConvertType = CoordinateConvertType.NO_ACTION;
+                if (coordinateSystemType == CoordinateSystemType.PROJCS)
+                    coordinateConvertType = CoordinateConvertType.PROJECTION_TO_LONLAT;
+                if (coordinateSystemType == CoordinateSystemType.PIXELCS)
+                    coordinateConvertType = CoordinateConvertType.PIXEL_REVERSION;
+                String imagePath = FileUtils.getStringPath(this.rootDir, imageInfo.getString("path"));
+                LabelPointTypeConvertor.convertLabelPointType(imagePath,labelObject,coordinateConvertType);
+            }
+
             imageManifest.addData(image, changeImage, JSONObject.toJSONString(labelObject),segmentation);
         }
         imageManifest.getDatasetInfo().setProjectId(labelDataset.getProjectId());
