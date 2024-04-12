@@ -111,4 +111,9 @@ public class LabelDatasetFile implements Serializable {
      * 变化检测关联文件id
      */
     private int relatedFileId;
+
+    /**
+     * 智能预处理保存路径
+     */
+    private String preprocessPath;
 }

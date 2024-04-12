@@ -95,10 +95,8 @@ public class LabelTaskFileInfo {
      */
     private LabelStatus status;
 
-
-
-
-
-
-
+    /**
+     * 智能预处理保存路径
+     */
+    private String preprocessPath;
 }

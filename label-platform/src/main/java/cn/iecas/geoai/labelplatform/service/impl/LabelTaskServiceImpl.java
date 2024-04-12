@@ -342,6 +342,9 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
             } else if (labelProject.getCategory().contains("elec-")) {
                 objectArr = JSONObject.parseObject(labelCommitInfo.getLabelInfo()).getJSONObject("object").getJSONArray("entities");
                 objectSize = objectArr.size();
+            } else if (labelProject.getCategory().contains("video-")) {
+                objectArr = JSONObject.parseObject(labelCommitInfo.getLabelInfo()).getJSONObject("object").getJSONArray("results");
+                objectSize = objectArr.size();
             } else {
                 objectArr = JSONObject.parseObject(labelCommitInfo.getLabelInfo()).getJSONArray("object");
                 objectSize = objectArr.size();
