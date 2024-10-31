@@ -89,6 +89,7 @@ value:
     call-service: http://192.168.9.64:32299/api/v1/task
     task-status: http://192.168.9.64:32299/api/v1/task/status
     task-result: http://192.168.9.64:32299/api/v1/task/result
+    preprocessing: http://192.168.2.169:32146/preprocessing
 
   database:
     enable: false

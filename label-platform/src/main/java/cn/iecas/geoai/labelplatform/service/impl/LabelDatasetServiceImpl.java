@@ -125,7 +125,7 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
         queryWrapper.select("file_id").eq("dataset_id",labelProject.getDatasetId());
         List<LabelDatasetFile> labelDatasetFileInfos = this.labelDatasetFileService.list(queryWrapper);
         List<Integer> fileIdList = labelDatasetFileInfos.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
-        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,DatasetType.IMAGE);
+        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,DatasetType.IMAGE, null);
 
         for (JSONObject fileInfo : fileInfoList) {
             String imageName = fileInfo.getString("imageName");
@@ -470,7 +470,7 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
                 .eq(!labelDataset.getCategory().equalsIgnoreCase("用户创建"), "status",LabelStatus.FINISH);
         List<LabelDatasetFile> labelDatasetFileList = this.labelDatasetFileService.list(queryWrapper);
         List<Integer> fileIdList = labelDatasetFileList.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
-        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,labelDataset.getDatasetType());
+        List<JSONObject> fileInfoList = this.fileService.listFileInfoByIdList(fileIdList,labelDataset.getDatasetType(), null);
 //        if (labelDataset.getDatasetType() == DatasetType.TEXT){
 //            for (LabelDatasetFile labelDatasetFile : labelDatasetFileList) {
 //                JSONObject fileInfo = fileInfoList.get(0);

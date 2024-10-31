@@ -1,26 +1,31 @@
 {
-  "object": [
-    {
-      "id": 1837,
-      "type": "Rectangle",
-      "checkStatus": 0,
-      "note": "",
-      "coordinate": "pixel",
-      "description": "像素坐标",
-      "possibleresult": [
+  "annotation": {
+    "objects": {
+      "object": [
         {
-          "name": "飞机",
-          "probability": "1"
+          "coordinate": "pixel",
+          "description": "像素坐标",
+          "id": "0",
+          "points": {
+            "point": [
+              "934,293",
+              "934,338",
+              "978,338",
+              "978,293"
+            ]
+          },
+          "possibleresult": [
+            {
+              "name": "other",
+              "probability": "0.692563"
+            }
+          ],
+          "type": "Rectangle"
         }
-      ],
-      "points": {
-        "point": [
-          "5823.935970324126 , 10916.600295639697",
-          "5823.935970324126 , 11160.617272494423",
-          "6071.954643605035 , 11160.617272494423",
-          "6071.954643605035 , 10916.600295639697"
-        ]
-      }
+      ]
+    },
+    "source": {
+      "filename": "/var/nfs/general/data/iservice/gm2oNj/4 (2).tif"
     }
-  ]
+  }
 }

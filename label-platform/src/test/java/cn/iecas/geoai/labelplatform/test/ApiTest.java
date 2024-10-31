@@ -12,6 +12,9 @@ import cn.iecas.geoai.labelplatform.service.LabelProjectService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.gdal.gdal.gdal;
+import org.gdal.ogr.*;
+import org.gdal.osr.SpatialReference;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -22,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
+
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.math.BigDecimal;
@@ -48,6 +52,8 @@ public class ApiTest {
     class LabelProjectSub {
         int id;
         int datasetId;
+
+        
         public LabelProjectSub(int id, int datasetId) {
             this.id = id;
             this.datasetId = datasetId;
@@ -56,14 +62,29 @@ public class ApiTest {
 
 
     @Test
-    public void upload() {
-
+    public void createShapeFile() {
+        gdal.AllRegister();
+        String shapeFilePath = "D:\\iecas\\temp\\filedata\\test.shp";
+        org.gdal.ogr.Driver oDriver = ogr.GetDriverByName("ESRI Shapefile");
+        DataSource dataSource = oDriver.CreateDataSource(shapeFilePath);
+        if (dataSource == null) {
+            System.out.println("创建适量文件 " + shapeFilePath + "" +
+                    "失败");
+        }
+        SpatialReference spatialReference = new SpatialReference();
+        spatialReference.SetWellKnownGeogCS("WGS84");
+        // 创建图层layer  参数说明：新图层名称，坐标系，图层的几何类型，创建选项，与驱动有关
+        Layer layer = dataSource.CreateLayer("test_layer", spatialReference, ogr.wkbPoint, null);
+        if (layer == null) {
+            System.out.println("图层创建失败");
+        }
+        System.out.println("图层创建成功");
     }
 
 
     @Test
     public void applyDatasetFile() {
-        int[] userIds = new int[]{0,1,15};
+        int[] userIds = new int[]{0, 1, 15};
         List<LabelDatasetFile> labelDatasetFiles = labelDatasetFileService.list(new QueryWrapper<LabelDatasetFile>().eq("dataset_id", 13));
         int len = labelDatasetFiles.size();
         if (labelDatasetFiles.size() > userIds.length) {
@@ -74,14 +95,16 @@ public class ApiTest {
             labelDatasetFileService.updateById(labelDatasetFiles.get(i));
         }
     }
+
     @Test
     public void testCacheWork() throws InterruptedException {
-        for (int i = 1; i <= 100; i+=50) {
+        for (int i = 1; i <= 100; i += 50) {
             long t = System.currentTimeMillis();
             this.executeCache(i, 50);
-            System.out.println("获取第"+i+"到"+(i+50)+"帧耗时：" + (System.currentTimeMillis() - t));
+            System.out.println("获取第" + i + "到" + (i + 50) + "帧耗时：" + (System.currentTimeMillis() - t));
         }
     }
+
 
     private void executeCache(int frameNumber, int returnNumber) {
 //        String url = "http://localhost:8085/geoai/V1/label-platform/task/getFrameImgByFrameNbr";
@@ -128,7 +151,7 @@ public class ApiTest {
                 .queryParam("datasetType", "VIDEO").build();
         long t = System.currentTimeMillis();
         JSONObject result = restTemplate.exchange(build.encode().toUri(), HttpMethod.GET, entity, JSONObject.class).getBody();
-        System.out.println("耗时：" + (System.currentTimeMillis()-t));
+        System.out.println("耗时：" + (System.currentTimeMillis() - t));
         System.out.println(result.size());
     }
 
@@ -143,7 +166,7 @@ public class ApiTest {
         UriComponents build = UriComponentsBuilder.fromHttpUrl(url).build();
         long t = System.currentTimeMillis();
         Integer result = restTemplate.exchange(build.encode().toUri(), HttpMethod.GET, entity, Integer.class).getBody();
-        System.out.println("耗时：" + (System.currentTimeMillis()-t));
+        System.out.println("耗时：" + (System.currentTimeMillis() - t));
         System.out.println(result);
     }
 
@@ -175,9 +198,9 @@ public class ApiTest {
         }
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(outputPath));
-        int len=0;
+        int len = 0;
         byte[] buffer = new byte[1024];
-        while ((len=inputStream.read(buffer)) != -1) {
+        while ((len = inputStream.read(buffer)) != -1) {
             bufferedOutputStream.write(buffer, 0, len);
         }
         bufferedOutputStream.flush();
@@ -214,7 +237,7 @@ public class ApiTest {
     @Test
     public void enumTest() {
         int i = 0;
-            System.out.println(SampleSetCategory.DETECTION);
+        System.out.println(SampleSetCategory.DETECTION);
     }
 
     @Test
@@ -308,12 +331,26 @@ public class ApiTest {
         tasksList.remove(task);
         System.out.println(tasksList);
 
-        List<Integer> list = new ArrayList<Integer>(){
-            {add(111);}
-            {add(222);}
-            {add(333);}
-            {add(111);}
-            {add(222);}
+        List<Integer> list = new ArrayList<Integer>() {
+            {
+                add(111);
+            }
+
+            {
+                add(222);
+            }
+
+            {
+                add(333);
+            }
+
+            {
+                add(111);
+            }
+
+            {
+                add(222);
+            }
         };
 
 
@@ -362,12 +399,12 @@ public class ApiTest {
         JSONObject body = exchange.getBody();
         System.out.println(body);
     }
+
     @Autowired
     private LabelProjectService labelProjectService;
 
     @Test
     public void testDateConvert() throws ParseException {
-
 
 
         int target = 150;
@@ -390,22 +427,21 @@ public class ApiTest {
                 temp++;
             }
         }
-        System.out.println("遍历得到的结果："+target+"有："+temp+"个，耗时："+(System.currentTimeMillis()-start)+"毫秒");
+        System.out.println("遍历得到的结果：" + target + "有：" + temp + "个，耗时：" + (System.currentTimeMillis() - start) + "毫秒");
 
 
         // Arrays二分法查找
-Object[] array = intArr.toArray();
+        Object[] array = intArr.toArray();
         start = System.currentTimeMillis();
         temp = Arrays.binarySearch(array, target);
-        System.out.println("遍历得到的结果："+target+"有："+temp+"个，耗时："+(System.currentTimeMillis()-start)+"毫秒");
-
+        System.out.println("遍历得到的结果：" + target + "有：" + temp + "个，耗时：" + (System.currentTimeMillis() - start) + "毫秒");
 
 
         System.out.println(cn.aircas.utils.date.DateUtils.nowDate());
         System.out.println(new Date());
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("lat","39");
-        jsonObject.put("lng","39");
+        jsonObject.put("lat", "39");
+        jsonObject.put("lng", "39");
         System.out.println(jsonObject);
 
         ArrayList<Integer> objects = new ArrayList<>();
@@ -425,11 +461,10 @@ Object[] array = intArr.toArray();
         project.setConsumeTime(consumeTime);
 
 
-
         int resultArr[][] = new int[9][9];
         for (int i = 0; i < resultArr.length; i++) {
             for (int j = 0; j < resultArr[i].length; j++) {
-                System.out.print("("+i+","+j+")->"+resultArr[i][j]+"  ");
+                System.out.print("(" + i + "," + j + ")->" + resultArr[i][j] + "  ");
             }
             System.out.println("");
         }
@@ -444,15 +479,15 @@ Object[] array = intArr.toArray();
             }
         }
 
-        int m = 1/0;
-        int[] a = new int[]{1,2,3};
+        int m = 1 / 0;
+        int[] a = new int[]{1, 2, 3};
         System.out.println(a);
         List<int[]> list = new ArrayList<>();
         list.add(a);
         int[][] arr = new int[9][9];
         for (int i = 0; i < arr.length; i++) {
             for (int j = 0; j < arr.length; j++) {
-                System.out.print("("+i+"，"+j+")---");
+                System.out.print("(" + i + "，" + j + ")---");
             }
             System.out.println("\n");
         }

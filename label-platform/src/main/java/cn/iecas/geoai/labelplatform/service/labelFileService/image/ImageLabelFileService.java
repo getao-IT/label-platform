@@ -273,7 +273,7 @@ public class ImageLabelFileService implements LabelFileService {
             JSONObject imageInfo = labelDatasetFile.getData();
             JSONObject labelJSON = JSONObject.parseObject(labelDatasetFile.getLabel());
             // 获取标注真实文件信息
-            JSONObject labelRelatedFile = fileService.getFileInfoById(labelDatasetFile.getFileId());
+            JSONObject labelRelatedFile = fileService.getFileInfoById(labelDatasetFile.getFileId(), null);
             Image image = new Image();
             image.setId(imageInfo.getInteger("id"));
             image.setImageName(imageInfo.getString("imageName"));
@@ -283,7 +283,7 @@ public class ImageLabelFileService implements LabelFileService {
             // 获取对比文件信息
             Image changeImage = new Image();
             if (labelDatasetFile.getRelatedFileId() != 0) {
-                JSONObject changeFile = fileService.getFileInfoById(labelDatasetFile.getRelatedFileId());
+                JSONObject changeFile = fileService.getFileInfoById(labelDatasetFile.getRelatedFileId(), null);
                 changeImage.setId(Integer.parseInt(String.valueOf(changeFile.get("id"))));
                 changeImage.setImageName(String.valueOf(changeFile.get("imageName")));
                 changeImage.setSource(String.valueOf(changeFile.get("source")));

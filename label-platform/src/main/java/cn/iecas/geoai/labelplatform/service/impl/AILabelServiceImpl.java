@@ -17,11 +17,13 @@ import cn.iecas.geoai.labelplatform.entity.emun.LabelProjectStatus;
 import cn.iecas.geoai.labelplatform.entity.emun.LabelStatus;
 import cn.iecas.geoai.labelplatform.service.AILabelService;
 import cn.iecas.geoai.labelplatform.service.FileService;
+import cn.iecas.geoai.labelplatform.service.LabelDatasetFileService;
 import cn.iecas.geoai.labelplatform.service.LabelDatasetService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.google.common.cache.Cache;
 import com.google.common.collect.Sets;
 import com.sun.javafx.binding.SelectBinding;
@@ -40,6 +42,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -72,6 +75,9 @@ public class AILabelServiceImpl implements AILabelService {
     @Value("${value.ai-label.service-detail}")
     private String serviceDetail;
 
+    @Value("${value.ai-label.preprocessing}")
+    private String imagePreprocess;
+
     @Autowired
     HttpServletRequest request;
 
@@ -80,6 +86,9 @@ public class AILabelServiceImpl implements AILabelService {
 
     @Autowired
     LabelDatasetService labelDatasetService;
+
+    @Autowired
+    LabelDatasetFileService datasetFileService;
 
     @Autowired
     FileService imageService;
@@ -463,7 +472,7 @@ public class AILabelServiceImpl implements AILabelService {
 
                 if (taskType == 1) {
                     imageIdList.add(imageId);
-                    List<JSONObject> fileList = imageService.listFileInfoByIdList(imageIdList, DatasetType.IMAGE);
+                    List<JSONObject> fileList = imageService.listFileInfoByIdList(imageIdList, DatasetType.IMAGE, token);
                     List<Image> imageList = fileList.stream().map(file -> JSONObject.parseObject(file.toJSONString(), Image.class)).collect(Collectors.toList());
                     String fileName = filePaths.get(tokenId);
                     aiLabelResult = aiLabelResult.getJSONObject("data").getJSONObject(fileName);
@@ -601,6 +610,49 @@ public class AILabelServiceImpl implements AILabelService {
 
         labelDatasetFile.setAiLabel("");
         labelDatasetFileMapper.updateById(labelDatasetFile);
+    }
+
+    /**
+     * 设置影像文件的预处理结果路径
+     * @param labelProject
+     * @param token
+     */
+    @Async
+    @Override
+    public void setImagePretreatPath(LabelProject labelProject, String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("token", token);
+        HttpEntity<JSONObject> entity = new HttpEntity<>(null, headers);
+
+        Set<Integer> unPretreatFileIds = new HashSet<>();
+        int datasetId = labelProject.getDatasetId();
+        QueryWrapper<LabelDatasetFile> queryWrapper = new QueryWrapper<LabelDatasetFile>().eq("dataset_id", datasetId);
+        List<LabelDatasetFile> labelDatasetFiles = this.labelDatasetFileMapper.selectList(queryWrapper);
+        log.info("数据集文件数量为：{}", labelDatasetFiles.size());
+        for (LabelDatasetFile labelDatasetFile : labelDatasetFiles) {
+            queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("file_id", labelDatasetFile.getFileId()).ne("preprocess_path", null);
+            if (this.labelDatasetFileMapper.selectCount(queryWrapper) == 0) {
+                JSONObject fileInfoById = this.imageService.getFileInfoById(labelDatasetFile.getFileId(), token);
+                URI uri = UriComponentsBuilder.fromHttpUrl(imagePreprocess)
+                        .queryParam("imgPath", fileInfoById.getString("path")).build().encode().toUri();
+                unPretreatFileIds.add(labelDatasetFile.getId());
+                log.info("正在进行智能辅助预处理：{}", fileInfoById.getString("path"));
+                try {
+                    String preprocessPath = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class).getBody();
+                    log.info("智能辅助预处理{}结束", fileInfoById.getString("path"), preprocessPath);
+                    labelDatasetFile.setPreprocessPath(preprocessPath);
+                    UpdateWrapper<LabelDatasetFile> updateWrapper = new UpdateWrapper<>();
+                    updateWrapper.set("preprocess_path", preprocessPath).set("status", LabelStatus.UNAPPLIED)
+                            .eq("id", labelDatasetFile.getId());
+                    this.datasetFileService.update(updateWrapper);
+                } catch (RestClientException e) {
+                    log.error("智能预辅助处理{}失败", fileInfoById.getString("path"));
+                }
+            } else {
+                log.info("数据集文件为 {} 的文件 {} 已存在预处理记录", labelDatasetFile.getId(), labelDatasetFile.getFileId());
+            }
+        }
     }
 
     /**

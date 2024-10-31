@@ -11,6 +11,7 @@ import cn.iecas.geoai.labelplatform.entity.emun.LabelPointType;
 import cn.iecas.geoai.labelplatform.service.LabelTaskService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.xpath.operations.Bool;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -47,6 +48,19 @@ public class LabelTaskController {
         List<Integer> imageIdList = this.labelTaskService.applyForData(taskId);
         return new CommonResult<List<Integer>>().success().data(imageIdList).message("申请标注/审核数据成功");
     }
+
+
+    @GetMapping("/isPreprocess")
+    @ApiOperation("判断标注任务是否处于预处理过程中")
+    @Log(value = "判断标注任务是否处于预处理过程中")
+    public CommonResult<Boolean> isPreprocess(int taskId){
+        Boolean preprocess = this.labelTaskService.isPreprocess(taskId);
+        if (preprocess)
+            return new CommonResult<Boolean>().success().data(preprocess).message("无可申领任务或正在进行预处理");
+        else
+            return new CommonResult<Boolean>().success().data(preprocess).message("预处理完毕");
+    }
+
 
     @ApiOperation("保存/提交标注信息")
     @PostMapping(value = "/commit")

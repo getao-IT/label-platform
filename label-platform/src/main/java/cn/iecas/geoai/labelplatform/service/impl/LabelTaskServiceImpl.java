@@ -762,7 +762,7 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
     public void exportLabelFile(LabelExportParam labelExportParam) throws UnsupportedEncodingException, DocumentException {
         labelExportParam.setFileInfo(null);
 
-        JSONObject fileInfo = this.fileService.getFileInfoById(labelExportParam.getFileId());
+        JSONObject fileInfo = this.fileService.getFileInfoById(labelExportParam.getFileId(), null);
         labelExportParam.setFileInfo(fileInfo);
 
         DatasetType fileType = labelExportParam.getFileType();
@@ -1030,6 +1030,7 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
         return resultList;
     }
 
+
     /**
      * 获取任意位置后的固定帧视频影像数据
      * @param videoPath
@@ -1095,5 +1096,23 @@ public class LabelTaskServiceImpl extends ServiceImpl<LabelTaskMapper, LabelTask
             throw new RuntimeException("IO异常");
         }
         return result;
+    }
+
+
+    /**
+     * 判断某影像标注任务是否处于预处理过程中
+     * @param taskId
+     * @return
+     */
+    @Override
+    public Boolean isPreprocess(int taskId) {
+        LabelTask task = this.labelTaskMapper.selectById(taskId);
+        LabelProject project = this.labelProjectService.getById(task.getLabelProjectId());
+        if (project.getDatasetType() != DatasetType.IMAGE) {
+            return false;
+        }
+        QueryWrapper<LabelDatasetFile> wrapper = new QueryWrapper<>();
+        wrapper.eq("dataset_id", task.getLabelDatasetId()).isNull("preprocess_path");
+        return labelDatasetFileService.list(wrapper).size() != 0;
     }
 }

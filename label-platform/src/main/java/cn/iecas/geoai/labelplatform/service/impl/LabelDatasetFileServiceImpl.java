@@ -230,7 +230,7 @@ public class LabelDatasetFileServiceImpl extends ServiceImpl<LabelDatasetFileMap
                 labelDatasetOrProjectFileInfo.setSource(String.valueOf(fileMap.get(String.valueOf(labelDatasetFile.getFileId())).get("source")));
             }
             if (labelDatasetFileRequest.getDatasetType() != DatasetType.TEXT && labelDatasetFileRequest.isFromProject()) {
-                JSONObject fileInfoById = this.fileService.getFileInfoById(labelDatasetFile.getFileId(), labelDatasetFileRequest.getDatasetType());
+                JSONObject fileInfoById = this.fileService.getFileInfoById(labelDatasetFile.getFileId(), labelDatasetFileRequest.getDatasetType(), null);
                 labelDatasetOrProjectFileInfo.setPublisherName(String.valueOf(fileInfoById.get("userName")));
                 labelDatasetOrProjectFileInfo.setSource(String.valueOf(fileInfoById.get("source")));
             }

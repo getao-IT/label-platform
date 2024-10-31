@@ -58,16 +58,16 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public JSONObject getFileInfoById(int fileId) {
+    public JSONObject getFileInfoById(int fileId, String token) {
         List<Integer> fileIdList = Collections.singletonList(fileId);
-        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,DatasetType.IMAGE);
+        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,DatasetType.IMAGE, token);
         return fileList.get(0);
     }
 
     @Override
-    public JSONObject getFileInfoById(int fileId, DatasetType datasetType) {
+    public JSONObject getFileInfoById(int fileId, DatasetType datasetType, String token) {
         List<Integer> fileIdList = Collections.singletonList(fileId);
-        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,datasetType);
+        List<JSONObject> fileList = this.listFileInfoByIdList(fileIdList,datasetType, token);
         return fileList.get(0);
     }
 
@@ -185,7 +185,7 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public List<JSONObject> listFileInfoByIdList(List<Integer> fileIdList, DatasetType datasetType) throws ResourceAccessException {
+    public List<JSONObject> listFileInfoByIdList(List<Integer> fileIdList, DatasetType datasetType, String token) throws ResourceAccessException {
         if (fileIdList.size()==0)
             return new ArrayList<>();
 
@@ -193,7 +193,10 @@ public class FileServiceImpl implements FileService {
         String fileIds = fileIdList.toString().replace("[","").replace("]","").replace(" ","");
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("token",request.getHeader("token"));
+        if (token == null)
+            httpHeaders.add("token", request.getHeader("token"));
+        else
+            httpHeaders.add("token", token);
         HttpEntity<String> httpEntity = new HttpEntity<>(null,httpHeaders);
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("content","false");

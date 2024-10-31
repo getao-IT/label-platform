@@ -18,4 +18,5 @@ public interface AILabelService {
     JSONObject getLabelMessage(int imageId, int taskId, String tokenId, LabelPointType labelPointType, HttpServletRequest request , int taskType);
     void updateLabelInfo(int imageId, int taskId);
     List<LabelCategory> getServoceVersionById(int serviceId);
+    void setImagePretreatPath(LabelProject labelProject, String token);
 }

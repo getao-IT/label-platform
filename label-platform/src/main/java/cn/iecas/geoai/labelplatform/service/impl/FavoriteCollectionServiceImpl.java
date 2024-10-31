@@ -43,7 +43,7 @@ public class FavoriteCollectionServiceImpl implements FavoriteCollectionService 
         int endIndex = Math.min(beginIndex + pageSize,size);
         //endIndex = beginIndex == endIndex ? endIndex+1 : endIndex;
         List<Integer> favoriteIdList = favoriteFileIdList.subList(beginIndex,endIndex);
-        fileInfoList = this.fileService.listFileInfoByIdList(favoriteIdList, DatasetType.IMAGE);
+        fileInfoList = this.fileService.listFileInfoByIdList(favoriteIdList, DatasetType.IMAGE, null);
         return new PageResult<>(pageNo,size,fileInfoList);
     }
 

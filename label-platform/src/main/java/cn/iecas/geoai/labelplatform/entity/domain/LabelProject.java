@@ -183,5 +183,11 @@ public class LabelProject implements Serializable {
      */
     @TableField(exist = false)
     private boolean unite;
+
+    /**
+     * 是否使用数据集已有的标注信息
+     */
+    @TableField(exist = false)
+    private boolean preprocessing;
 }
 
