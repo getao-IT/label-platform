@@ -28,7 +28,7 @@ public interface LabelDatasetService extends IService<LabelDataset> {
     int createDatasetFromProject(LabelProject labelProject, boolean useLabel);
     void createLabelDatasetInfo(LabelDataset labelDataset) throws IOException;
     Map<Integer,String> getDatasetNameList(int userId, DatasetType datasetType);
-    void createSampleSet(SampleSetCreationInfo sampleSetCreationInfo) throws IOException;
+    DatasetPublishInfo createSampleSet(SampleSetCreationInfo sampleSetCreationInfo) throws IOException;
     PageResult<LabelDatasetOrProjectFileInfo> getFileInfoFromDataset(LabelDatasetFileRequest labelDatasetFileRequest) throws ResourceAccessException;
     void getManifest(int datasetId, HttpServletResponse httpServletResponse) throws IOException;
     PageResult<LabelDataset> getLabelDatasetInfo(LabelDatasetsSearchRequest labelDatasetsSearchRequest);

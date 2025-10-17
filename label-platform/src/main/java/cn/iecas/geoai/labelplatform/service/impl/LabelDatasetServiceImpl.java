@@ -19,6 +19,7 @@ import cn.iecas.geoai.labelplatform.service.labelFileService.LabelFileService;
 import cn.iecas.geoai.labelplatform.util.LabelPointTypeConvertor;
 import cn.iecas.geoai.labelplatform.util.XMLUtils;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -82,6 +83,9 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
 
     @Autowired
     private LabelDatasetMapper labelDatasetMapper;
+
+    @Autowired
+    private HttpServletRequest request;
 
 
     @Override
@@ -401,7 +405,7 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
      * @param sampleSetCreationInfo 样本集创建参数
      */
     @Override
-    public void createSampleSet(SampleSetCreationInfo sampleSetCreationInfo) throws IOException {
+    public DatasetPublishInfo createSampleSet(SampleSetCreationInfo sampleSetCreationInfo) throws IOException {
         int datasetId = sampleSetCreationInfo.getDatasetId();
         LabelDataset labelDataset = this.getById(datasetId);
         Assert.notNull(labelDataset,"查找的数据集不存在");
@@ -429,8 +433,40 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
         }
 
         sampleSetService.createSampleSet(sampleSetCreationInfo);
+
+        return builderPublishInfo(labelDataset);
     }
 
+    private DatasetPublishInfo builderPublishInfo(LabelDataset labelDataset) {
+        LabelProject project = this.labelProjectService.getById(labelDataset.getProjectId());
+        DatasetPublishInfo publishInfo = DatasetPublishInfo.builder().datasetName(labelDataset.getDatasetName())
+                .datasetType(labelDataset.getDatasetType().getValue()).datasetPath(labelDataset.getDatasetPath())
+                .brFrom(project.getProjectName()).publishStatus(true).msg("发布样本集成功").build();
+
+        List<String> coords = new ArrayList<>();
+        try {
+            List<LabelDatasetFile> datasetFiles = labelDatasetFileService.list(new LambdaQueryWrapper<LabelDatasetFile>().eq(LabelDatasetFile::getDatasetId, labelDataset.getId()));
+            List<Integer> fileIds = datasetFiles.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
+            List<JSONObject> fileInfos = fileService.listFileInfoByIdList(fileIds, DatasetType.IMAGE, request.getHeader("token"));
+            for (JSONObject fileInfo : fileInfos) {
+                Float minLon = fileInfo.getFloat("minLon");
+                Float minLat = fileInfo.getFloat("minLat");
+                Float maxLon = fileInfo.getFloat("maxLon");
+                Float maxLat = fileInfo.getFloat("maxLat");
+                String lonLatCoord = "minLon: " + minLon + ", " + "minLat: " + minLat + ", " + "maxLon: " + maxLon + ", " + "maxLat: " + maxLat;
+                coords.add(lonLatCoord);
+            }
+        } catch (Exception e) {
+            log.error("发布样本集过程出现异常：{}", e.getMessage());
+            publishInfo.setPublishStatus(false);
+            publishInfo.setMsg("发布样本集过程出现异常：" + e.getMessage());
+        }
+
+        publishInfo.setCoords(coords);
+        publishInfo.setImageCount(coords.size());
+
+        return publishInfo;
+    }
 
     /**
      * 删除数据集

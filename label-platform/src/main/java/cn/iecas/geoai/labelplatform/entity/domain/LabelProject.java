@@ -189,5 +189,11 @@ public class LabelProject implements Serializable {
      */
     @TableField(exist = false)
     private boolean preprocessing;
+
+    /**
+     * 标注标签文件绝对路径
+     */
+    @TableField
+    private String keywordPath;
 }
 

@@ -21,6 +21,7 @@ import cn.iecas.geoai.labelplatform.util.XMLUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -31,6 +32,7 @@ import com.twelvemonkeys.util.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.springframework.beans.BeanUtils;
@@ -116,6 +118,9 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
     @Value(value = "${value.api.push-label-project}")
     private String pushLabelProjectUrl;
 
+    @Autowired
+    private HttpServletRequest request;
+
     /**
      * 根据条件分页查询标注project信息
      * @param labelProjectSearchRequest 标注project查询条件信息
@@ -156,7 +161,13 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
         int labelDatasetId = this.labelDatasetService.createDatasetFromProject(labelProject,labelProject.isUseLabel());
 
         labelProject.setDatasetId(labelDatasetId);
+
+        // 获取标注项目标签
+        String keywords = getKeywords(labelProject);
+        labelProject.setKeywords(keywords);
+
         this.updateById(labelProject);
+
         labelTaskService.createLabelTasks(labelProject);
         labelTaskService.createCheckTasks(labelProject);
         if (labelProject.getIsAiLabel()){
@@ -175,6 +186,33 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
                 this.labelProjectService.updateUniteLabelProjectToHt(labelProject, request);
         }
 
+    }
+
+    private String getKeywords(LabelProject labelProject) {
+        JSONArray keys = new JSONArray();
+        String keywordPath = labelProject.getKeywordPath();
+        try {
+            String contents = org.apache.commons.io.FileUtils.readFileToString(new File(keywordPath), "UTF-8");
+            if (StringUtils.isBlank(contents))
+                return null;
+            JSONObject jsonContents = JSONObject.parseObject(contents);
+            List<LabelDatasetFile> datasetFiles = labelDatasetFileService.list(new LambdaQueryWrapper<LabelDatasetFile>().eq(LabelDatasetFile::getDatasetId, labelProject.getDatasetId()));
+            List<Integer> fileIds = datasetFiles.stream().map(LabelDatasetFile::getFileId).collect(Collectors.toList());
+            List<JSONObject> fileInfos = fileService.listFileInfoByIdList(fileIds, DatasetType.IMAGE, request.getHeader("token"));
+            for (JSONObject fileInfo : fileInfos) {
+                Float minLon = fileInfo.getFloat("minLon");
+                Float minLat = fileInfo.getFloat("minLat");
+                Float maxLon = fileInfo.getFloat("maxLon");
+                Float maxLat = fileInfo.getFloat("maxLat");
+                String lonLatCoord = minLon + "-" + minLat + "-" + maxLon + "-" + maxLat;
+                if (jsonContents.getJSONArray(lonLatCoord) != null) {
+                    keys.addAll(jsonContents.getJSONArray(lonLatCoord));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return JSONObject.toJSONString(keys);
     }
 
     /**

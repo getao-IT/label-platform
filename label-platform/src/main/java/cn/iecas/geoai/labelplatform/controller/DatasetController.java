@@ -96,9 +96,9 @@ public class DatasetController {
     @ApiOperation("生成数据集的样本集合")
     @Log(value = "生成数据集的样本集合")
     @PostMapping(value = "/sampleset")
-    public CommonResult<String> createSampleSet(@RequestBody SampleSetCreationInfo sampleSetCreationInfo) throws IOException {
-        this.labelDatasetService.createSampleSet(sampleSetCreationInfo);
-        return new CommonResult<String>().success().message("样本集生成成功");
+    public CommonResult<Object> createSampleSet(@RequestBody SampleSetCreationInfo sampleSetCreationInfo) throws IOException {
+        DatasetPublishInfo publishInfo = this.labelDatasetService.createSampleSet(sampleSetCreationInfo);
+        return new CommonResult<Object>().success().data(publishInfo).message("样本集生成成功");
     }
 
     @Log(value = "创建数据集并创建标注项目")
