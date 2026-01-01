@@ -49,8 +49,8 @@ public class DatasetController {
     @ApiOperation("获取用户所有数据集的名称")
     @Log(value = "获取用户所有数据集的名称")
     @GetMapping(value = "/name")
-    public CommonResult<Map<Integer,String>> getLabelDatasetNames(/*@Min(value = 0,message = "userId必须为正整数") */int userId, DatasetType datasetType){
-        Map<Integer,String> datasetNameList = this.labelDatasetService.getDatasetNameList(userId,datasetType);
+    public CommonResult<Map<Integer,String>> getLabelDatasetNames(DatasetType datasetType){
+        Map<Integer,String> datasetNameList = this.labelDatasetService.getDatasetNameList(datasetType);
         return new CommonResult<Map<Integer,String>>().data(datasetNameList).success().message("查询数据集名称成功");
     }
 
@@ -65,8 +65,8 @@ public class DatasetController {
     @Log(value = "验证要创建项目的数据集名称是否存在")
     @GetMapping("/isExist")
     @ApiOperation("验证要创建项目的项目名称是否存在")
-    public CommonResult<Boolean> isExistDataset(String datasetName,/*@Min(value = 0,message = "userId必须为正整数")*/ int userId){
-        Boolean exist = labelDatasetService.isExistDataset(datasetName,userId);
+    public CommonResult<Boolean> isExistDataset(String datasetName){
+        Boolean exist = labelDatasetService.isExistDataset(datasetName);
         return new CommonResult<Boolean>().data(exist).success().message("查看数据集名称是否存在成功");
     }
 

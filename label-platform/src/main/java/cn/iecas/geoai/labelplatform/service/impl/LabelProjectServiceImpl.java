@@ -8,6 +8,7 @@ import cn.iecas.geoai.labelplatform.dao.LabelDatasetFileMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelDatasetImageInfoMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelProjectMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelTaskStatisInfoMapper;
+import cn.iecas.geoai.labelplatform.entity.common.CommonResult;
 import cn.iecas.geoai.labelplatform.entity.common.DatasetType;
 import cn.iecas.geoai.labelplatform.entity.common.PageResult;
 import cn.iecas.geoai.labelplatform.entity.domain.*;
@@ -112,6 +113,9 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private UserInfoService userInfoService;
+
     @Value( value = "${value.dir.rootDir}")
     private String rootDir;
 
@@ -163,10 +167,10 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
         labelProject.setDatasetId(labelDatasetId);
 
         // 获取标注项目标签
-        String keywords = getKeywords(labelProject);
+        /*String keywords = getKeywords(labelProject);
         labelProject.setKeywords(keywords);
 
-        this.updateById(labelProject);
+        this.updateById(labelProject);*/
 
         labelTaskService.createLabelTasks(labelProject);
         labelTaskService.createCheckTasks(labelProject);
@@ -645,7 +649,12 @@ public class LabelProjectServiceImpl extends ServiceImpl<LabelProjectMapper,Labe
     }
 
     @Override
-    public Boolean isExistLabelProject(String projectName,int userId) {
+    public Boolean isExistLabelProject(String projectName) {
+        CommonResult<JSONObject> userInfo = userInfoService.getUserInfoByToken(request.getHeader("token"));
+        int userId = 0;
+        if (userInfo.getData() != null) {
+            userId = userInfo.getData().getInteger("id");
+        }
         QueryWrapper<LabelProject> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("project_name",projectName).eq("user_id",userId);
         if (labelProjectMapper.selectCount(queryWrapper)!=0){

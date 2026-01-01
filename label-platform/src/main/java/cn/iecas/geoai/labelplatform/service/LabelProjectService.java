@@ -25,7 +25,7 @@ public interface LabelProjectService extends IService<LabelProject>{
     void updateUniteLabelProjectToFzt(LabelProject labelProject, HttpServletRequest request);
     PageResult<LabelProject> getLabelProject(LabelProjectSearchRequest labelProjectSearchRequest);
     void updateLabelProject(LabelProject labelProject);
-    Boolean isExistLabelProject(String projectName,int userId);
+    Boolean isExistLabelProject(String projectName);
     void updateLabelProjectUser(LabelProjectUpdateUserInfo labelProjectUpdateUserInfo);
     void exportLabelFileToZip(int projectId, HttpServletResponse response) throws IOException;
     List<Integer> createProjectByFileIsRepeat(int srcProjectId, List<Integer> mergeProjectIds, boolean isMerge,

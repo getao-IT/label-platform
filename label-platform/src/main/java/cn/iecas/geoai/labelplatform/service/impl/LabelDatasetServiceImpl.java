@@ -7,6 +7,7 @@ import cn.iecas.geoai.labelplatform.dao.LabelDatasetFileMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelDatasetImageInfoMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelDatasetMapper;
 import cn.iecas.geoai.labelplatform.dao.LabelProjectMapper;
+import cn.iecas.geoai.labelplatform.entity.common.CommonResult;
 import cn.iecas.geoai.labelplatform.entity.common.DatasetType;
 import cn.iecas.geoai.labelplatform.entity.common.PageResult;
 import cn.iecas.geoai.labelplatform.entity.domain.*;
@@ -86,6 +87,9 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
 
     @Autowired
     private HttpServletRequest request;
+
+    @Autowired
+    private UserInfoService userInfoService;
 
 
     @Override
@@ -353,11 +357,16 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
 
     /**
      * 获取用户所有数据集的名称
-     * @param userId 用户id
      * @return list<String> 该用户的数据集id列表</String></>
      */
     @Override
-    public Map<Integer,String> getDatasetNameList(int userId, DatasetType datasetType) {
+    public Map<Integer,String> getDatasetNameList(DatasetType datasetType) {
+        CommonResult<JSONObject> userInfo = userInfoService.getUserInfoByToken(request.getHeader("token"));
+        int userId = 0;
+        if (userInfo.getData() != null) {
+            userId = userInfo.getData().getInteger("id");
+        }
+
         Map<Integer,String> datasetNameMap = new HashMap<>();
         QueryWrapper<LabelDataset> queryWrapper = new QueryWrapper<>();
         queryWrapper = queryWrapper.select("id","dataset_name").eq("visibility",true)
@@ -601,12 +610,19 @@ public class LabelDatasetServiceImpl extends ServiceImpl<LabelDatasetMapper,Labe
 
 
     @Override
-    public Boolean isExistDataset(String datasetName, int userId) {
+    public Boolean isExistDataset(String datasetName) {
+        CommonResult<JSONObject> userInfo = userInfoService.getUserInfoByToken(request.getHeader("token"));
+        int userId = 0;
+        if (userInfo.getData() != null) {
+            userId = userInfo.getData().getInteger("id");
+        }
+        int finalUserId = userId;
+
         QueryWrapper<LabelDataset> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("dataset_name",datasetName).and(new Function<QueryWrapper<LabelDataset>, QueryWrapper<LabelDataset>>() {
             @Override
             public QueryWrapper<LabelDataset> apply(QueryWrapper<LabelDataset> qw) {
-                return qw.eq("user_id", userId).or().eq("is_public", true);
+                return qw.eq("user_id", finalUserId).or().eq("is_public", true);
             }
         });
         if (this.count(queryWrapper)!=0){

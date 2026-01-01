@@ -27,13 +27,13 @@ public interface LabelDatasetService extends IService<LabelDataset> {
     List<Integer> getAllFileIdList(FileSearchParam fileSearchParam);
     int createDatasetFromProject(LabelProject labelProject, boolean useLabel);
     void createLabelDatasetInfo(LabelDataset labelDataset) throws IOException;
-    Map<Integer,String> getDatasetNameList(int userId, DatasetType datasetType);
+    Map<Integer,String> getDatasetNameList(DatasetType datasetType);
     DatasetPublishInfo createSampleSet(SampleSetCreationInfo sampleSetCreationInfo) throws IOException;
     PageResult<LabelDatasetOrProjectFileInfo> getFileInfoFromDataset(LabelDatasetFileRequest labelDatasetFileRequest) throws ResourceAccessException;
     void getManifest(int datasetId, HttpServletResponse httpServletResponse) throws IOException;
     PageResult<LabelDataset> getLabelDatasetInfo(LabelDatasetsSearchRequest labelDatasetsSearchRequest);
     String createManifest(LabelDataset labelDataset) throws IOException;
-    Boolean isExistDataset(String datasetName,int userId);
+    Boolean isExistDataset(String datasetName);
     void createMergeProjectDataset(LabelDataset labelDataset, List<LabelDatasetFile> datasetFileIdList, List<Integer> projectIds);
     LabelDataset getMergeDataSet(UserInfo userInfo, List<Integer> datasetIdList, List<LabelDatasetFile> labelDatasetFileList);
     int getDatasetFileFinishCount(LabelDataset labelDataset);

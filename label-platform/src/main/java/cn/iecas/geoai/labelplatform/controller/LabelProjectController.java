@@ -91,8 +91,8 @@ public class LabelProjectController {
     @GetMapping("/isExist")
     @ApiOperation("验证要创建项目的项目名称是否存在")
     @Log("验证要创建项目的项目名称是否存在")
-    public CommonResult<Boolean> isExistLabelProject(String projectName,/*@Min(value = 0,message = "userId必须为正整数")*/ int userId){
-        Boolean exist = labelProjectService.isExistLabelProject(projectName,userId);
+    public CommonResult<Boolean> isExistLabelProject(String projectName){
+        Boolean exist = labelProjectService.isExistLabelProject(projectName);
         return new CommonResult<Boolean>().data(exist).success().message("查看项目名称是否存在成功");
     }
 
